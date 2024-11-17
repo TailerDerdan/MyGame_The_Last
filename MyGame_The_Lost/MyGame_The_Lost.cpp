@@ -17,7 +17,7 @@ int main()
     while (camera.m_window.isOpen())
     {
         camera.Update();
-        //map->UpdateMap(WINDOW_WIDTH, WINDOW_HEIGHT, camera.GetViewPosition());
+        map->UpdateMap(WINDOW_WIDTH, WINDOW_HEIGHT, camera.GetViewPosition());
         redrawFrame(camera.m_window, map);
     }
 

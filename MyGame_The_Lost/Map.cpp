@@ -2,11 +2,14 @@
 
 Map::Map(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, sf::Vector2f viewPosition)
 {
-	textureOfWall.loadFromFile("../assets/wall.jpg");
-	textureOfStone.loadFromFile("../assets/stone.jpg");
+	textureOfCave.loadFromFile("../assets/textureForCave.jpg");
+
+	mapOfTexture.resize(WIDTH_MAP * HEIGHT_MAP + 1);
 
 	GenerateMap(4);
+	CreateTileForMap();
 	UpdateMap(WIDTH_WINDOW, HEIGHT_WINDOW, viewPosition);
+
 	previousCoordView = viewPosition;
 }
 
@@ -156,7 +159,6 @@ void Map::GetNextIteration()
 			{
 				newGeneratedMap[iterX][iterY] = TypeTile::Stone;
 			}
-
 		}
 	}
 
@@ -176,18 +178,36 @@ void Map::GenerateMap(int countOfIteration)
 	{
 		GetNextIteration();
 	}
-	
+}
+
+void Map::CreateTileForMap()
+{
+	for (int iter = 0; iter < WIDTH_MAP * HEIGHT_MAP; iter++)
+	{
+		Tile* tile = new Tile();
+		tile->sprite.setTexture(textureOfCave);
+		mapOfTexture.at(iter) = tile;
+	}
 }
 
 void Map::UpdateMap(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, sf::Vector2f viewPosition)
 {
-	sf::Vector2f startPosition = { 0.f, 0.f };
-	if (previousCoordView == viewPosition && previousCoordView != startPosition)
+	if (!isMapRenderFirstTime)
 	{
-		return;
+		isMapRenderFirstTime = true;
 	}
-	mapOfTexture.clear();
+	else
+	{
+		if (previousCoordView == viewPosition)
+		{
+			return;
+		}
+	}
+
 	previousCoordView = viewPosition;
+
+	int iterForVector = 0;
+
 	for (int iterX = 0; iterX < WIDTH_MAP; iterX++)
 	{
 		for (int iterY = 0; iterY < HEIGHT_MAP; iterY++)
@@ -196,45 +216,34 @@ void Map::UpdateMap(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, sf::Vector2
 			int yCoord = std::floor(numberOfTile / WIDTH_MAP);
 			int xCoord = numberOfTile - WIDTH_MAP * yCoord;
 
-			/*if (xCoord * WIDTH_TILE < viewPosition.x || xCoord * WIDTH_TILE > WIDTH_WINDOW)
+			if ((xCoord * WIDTH_TILE >= viewPosition.x && xCoord * WIDTH_TILE <= WIDTH_WINDOW + viewPosition.x) &&
+				(yCoord * HEIGHT_TILE >= viewPosition.y && yCoord * HEIGHT_TILE <= HEIGHT_WINDOW + viewPosition.y))
 			{
-				continue;
-			}
 
-			if (yCoord * HEIGHT_TILE < viewPosition.y || yCoord * HEIGHT_TILE > HEIGHT_WINDOW)
-			{
-				continue;
-			}*/
+				if (generatedMap[iterX][iterY] == TypeTile::Wall)
+				{
+					mapOfTexture[iterForVector]->number = numberOfTile;
+					
+					mapOfTexture[iterForVector]->typeTile = TypeTile::Wall;
 
-			if (generatedMap[iterX][iterY] == TypeTile::Wall)
-			{
-				Tile* tile = new Tile();
-				tile->number = numberOfTile;
+					mapOfTexture[iterForVector]->texture = { 25, 0, WIDTH_TILE, HEIGHT_TILE };
+					mapOfTexture[iterForVector]->sprite.setTextureRect(mapOfTexture[iterForVector]->texture);
 
-				tile->typeTile = TypeTile::Wall;
+					mapOfTexture[iterForVector]->sprite.setPosition({ float(xCoord * WIDTH_TILE), float(yCoord * HEIGHT_TILE) });
 
-				tile->sprite.setTexture(textureOfWall);
-				tile->texture = { 0, 0, WIDTH_TILE, HEIGHT_TILE };
-				tile->sprite.setTextureRect(tile->texture);
+				}
+				if (generatedMap[iterX][iterY] == TypeTile::Stone)
+				{
+					mapOfTexture[iterForVector]->number = numberOfTile;
 
-				tile->sprite.setPosition({ float(xCoord * WIDTH_TILE), float(yCoord * HEIGHT_TILE) });
+					mapOfTexture[iterForVector]->typeTile = TypeTile::Stone;
 
-				mapOfTexture.push_back(tile);
-			}
-			if (generatedMap[iterX][iterY] == TypeTile::Stone)
-			{
-				Tile* tile = new Tile();
-				tile->number = numberOfTile;
+					mapOfTexture[iterForVector]->texture = { 0, 0, WIDTH_TILE, HEIGHT_TILE };
+					mapOfTexture[iterForVector]->sprite.setTextureRect(mapOfTexture[iterForVector]->texture);
 
-				tile->typeTile = TypeTile::Stone;
-
-				tile->sprite.setTexture(textureOfStone);
-				tile->texture = { 0, 0, WIDTH_TILE, HEIGHT_TILE };
-				tile->sprite.setTextureRect(tile->texture);
-
-				tile->sprite.setPosition({ float(xCoord * WIDTH_TILE), float(yCoord * HEIGHT_TILE) });
-
-				mapOfTexture.push_back(tile);
+					mapOfTexture[iterForVector]->sprite.setPosition({ float(xCoord * WIDTH_TILE), float(yCoord * HEIGHT_TILE) });
+				}
+				iterForVector++;
 			}
 		}
 	}
@@ -242,8 +251,15 @@ void Map::UpdateMap(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, sf::Vector2
 
 void Map::DrawMap(sf::RenderWindow& window)
 {
-	for (auto tile : mapOfTexture)
+	for (long iter = 0; iter < mapOfTexture.size(); iter++)
 	{
-		window.draw(tile->sprite);
+		if (mapOfTexture[iter])
+		{
+			window.draw(mapOfTexture[iter]->sprite);
+		}
+		else
+		{
+			break;
+		}
 	}
 }

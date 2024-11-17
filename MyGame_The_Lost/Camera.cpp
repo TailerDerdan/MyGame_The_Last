@@ -4,7 +4,7 @@ Camera::Camera()
 {
 	m_window.create(
 		sf::VideoMode({ WINDOW_WIDTH, WINDOW_HEIGHT }),
-		"The Lost", sf::Style::Fullscreen);
+		"The Lost", sf::Style::Default);
 
 	m_view.reset(sf::FloatRect({ 0.f, 0.f }, { WINDOW_WIDTH, WINDOW_HEIGHT }));
 	m_window.setView(m_view);

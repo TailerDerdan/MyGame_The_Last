@@ -22,7 +22,7 @@ struct Tile {
 	Tile()
 	{
 		typeTile = TypeTile::Wall;
-		number = 0;
+		number = -1;
 	}
 };
 
@@ -34,6 +34,8 @@ public:
 	void UpdateMap(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, sf::Vector2f viewPosition);
 
 private:
+	void CreateTileForMap();
+
 	sf::Vector2i GetCountOfNeighbor(sf::Vector2i coordOfTile);
 	void SetRandomGeneration();
 	void GetNextIteration();
@@ -41,12 +43,14 @@ private:
 	void GenerateMap(int countOfIteration);
 
 private:
+	bool isMapRenderFirstTime = false;
+
 	sf::Vector2f previousCoordView;
 
-	sf::Texture textureOfWall;
-	sf::Texture textureOfStone;
+	sf::Texture textureOfCave;
 
 	std::vector<Tile*> mapOfTexture;
+
 	std::array<std::array<int, HEIGHT_MAP>, WIDTH_MAP> generatedMap;
 	std::array<std::array<int, HEIGHT_MAP>, WIDTH_MAP> newGeneratedMap;
 };
