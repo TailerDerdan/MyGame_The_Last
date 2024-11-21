@@ -132,7 +132,7 @@ void Map::SetRandomGeneration()
 		for (int iterY = 0; iterY < HEIGHT_MAP; iterY++)
 		{
 			int randomNumber = rand() % 100;
-			if (randomNumber < 54)
+			if (randomNumber < 58)
 			{
 				generatedMap[iterX][iterY] = TypeTile::Wall;
 			}
@@ -212,9 +212,9 @@ void Map::UpdateMap(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, sf::Vector2
 	{
 		for (int iterY = 0; iterY < HEIGHT_MAP; iterY++)
 		{
-			int numberOfTile = iterX * WIDTH_MAP + iterY;
-			int yCoord = std::floor(numberOfTile / WIDTH_MAP);
-			int xCoord = numberOfTile - WIDTH_MAP * yCoord;
+			int numberOfTile = iterX * HEIGHT_MAP + iterY;
+			int yCoord = std::floor(numberOfTile / HEIGHT_MAP);
+			int xCoord = numberOfTile - HEIGHT_MAP * yCoord;
 
 			if ((xCoord * WIDTH_TILE >= viewPosition.x && xCoord * WIDTH_TILE <= WIDTH_WINDOW + viewPosition.x) &&
 				(yCoord * HEIGHT_TILE >= viewPosition.y && yCoord * HEIGHT_TILE <= HEIGHT_WINDOW + viewPosition.y))
@@ -259,6 +259,29 @@ void Map::DrawMap(sf::RenderWindow& window)
 		}
 		else
 		{
+			break;
+		}
+	}
+}
+
+TypeTile Map::GetTypeOfTile(int numberOfTile)
+{
+	for (auto tile : mapOfTexture)
+	{
+		if (tile && tile->number == numberOfTile)
+		{
+			return tile->typeTile;
+		}
+	}
+}
+
+void Map::ChangeColorOfTile(int numberOfTile)
+{
+	for (auto tile : mapOfTexture)
+	{
+		if (tile && tile->number == numberOfTile)
+		{
+			tile->sprite.setColor(sf::Color(255, 0, 0));
 			break;
 		}
 	}

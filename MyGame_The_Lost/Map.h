@@ -1,30 +1,9 @@
 #pragma once
 #include "includes.h"
+#include "Tile.h"
 
 const int WIDTH_MAP = 154;
 const int HEIGHT_MAP = 200;
-
-const int WIDTH_TILE = 25;
-const int HEIGHT_TILE = 25;
-
-enum TypeTile {
-	Wall,
-	Stone,
-};
-
-struct Tile {
-	TypeTile typeTile;
-	sf::IntRect texture;
-	sf::Sprite sprite;
-
-	int number;
-
-	Tile()
-	{
-		typeTile = TypeTile::Wall;
-		number = -1;
-	}
-};
 
 class Map
 {
@@ -32,6 +11,9 @@ public:
 	Map(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, sf::Vector2f viewPosition);
 	void DrawMap(sf::RenderWindow& window);
 	void UpdateMap(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, sf::Vector2f viewPosition);
+
+	TypeTile GetTypeOfTile(int numberOfTile);
+	void ChangeColorOfTile(int numberOfTile);
 
 private:
 	void CreateTileForMap();
