@@ -13,113 +13,39 @@ Map::Map(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, sf::Vector2f viewPosit
 	previousCoordView = viewPosition;
 }
 
-sf::Vector2i Map::GetCountOfNeighbor(sf::Vector2i coordOfTile)
+int Map::GetCountOfNeighbor(sf::Vector2i coordOfTile)
 {
-	sf::Vector2i countOfNeighbor;
+	int countOfNeighbor = 0;
 
-	bool isTileOnBorderTop = false;
-	bool isTileOnBorderBottom = false;
-
-	bool isTileOnBorderLeft = false;
-	bool isTileOnBorderRight = false;
-
-	if (coordOfTile.x == 0)
+	for (int iterX = -1; iterX <= 1; iterX++)
 	{
-		isTileOnBorderLeft = true;
-		countOfNeighbor.x += 3;
-	}
-	else if (coordOfTile.x == WIDTH_MAP)
-	{
-		isTileOnBorderRight = true;
-		countOfNeighbor.x += 3;
-	}
-
-	if (coordOfTile.y == 0)
-	{
-		isTileOnBorderTop = true;
-		countOfNeighbor.x += 3;
-	}
-	else if (coordOfTile.y == HEIGHT_MAP)
-	{
-		isTileOnBorderBottom = true;
-		countOfNeighbor.x += 3;
-	}
-
-	if ((coordOfTile.x == 0 && coordOfTile.y == 0) || (coordOfTile.x == WIDTH_MAP && coordOfTile.y == HEIGHT_MAP))
-	{
-		countOfNeighbor.x--;
-	}
-
-	if (!isTileOnBorderLeft && !isTileOnBorderTop && generatedMap[coordOfTile.x - 1][coordOfTile.y - 1] == TypeTile::Wall)
-	{
-		countOfNeighbor.x += 1;
-	}
-	if (!isTileOnBorderLeft && !isTileOnBorderTop && generatedMap[coordOfTile.x - 1][coordOfTile.y - 1] == TypeTile::Stone)
-	{
-		countOfNeighbor.y += 1;
-	}
-
-	if (!isTileOnBorderTop && generatedMap[coordOfTile.x][coordOfTile.y - 1] == TypeTile::Wall)
-	{
-		countOfNeighbor.x += 1;
-	}
-	if (!isTileOnBorderTop && generatedMap[coordOfTile.x][coordOfTile.y - 1] == TypeTile::Stone)
-	{
-		countOfNeighbor.y += 1;
-	}
-
-	if (!isTileOnBorderRight && !isTileOnBorderTop && generatedMap[coordOfTile.x + 1][coordOfTile.y - 1] == TypeTile::Wall)
-	{
-		countOfNeighbor.x += 1;
-	}
-	if (!isTileOnBorderRight && !isTileOnBorderTop && generatedMap[coordOfTile.x + 1][coordOfTile.y - 1] == TypeTile::Stone)
-	{
-		countOfNeighbor.y += 1;
-	}
-
-	if (!isTileOnBorderLeft && generatedMap[coordOfTile.x - 1][coordOfTile.y] == TypeTile::Wall)
-	{
-		countOfNeighbor.x += 1;
-	}
-	if (!isTileOnBorderLeft && generatedMap[coordOfTile.x - 1][coordOfTile.y] == TypeTile::Stone)
-	{
-		countOfNeighbor.y += 1;
-	}
-
-	if (!isTileOnBorderRight && generatedMap[coordOfTile.x + 1][coordOfTile.y] == TypeTile::Wall)
-	{
-		countOfNeighbor.x += 1;
-	}
-	if (!isTileOnBorderRight && generatedMap[coordOfTile.x + 1][coordOfTile.y] == TypeTile::Stone)
-	{
-		countOfNeighbor.y += 1;
-	}
-
-	if (!isTileOnBorderLeft && !isTileOnBorderBottom && generatedMap[coordOfTile.x - 1][coordOfTile.y + 1] == TypeTile::Wall)
-	{
-		countOfNeighbor.x += 1;
-	}
-	if (!isTileOnBorderLeft && !isTileOnBorderBottom && generatedMap[coordOfTile.x - 1][coordOfTile.y + 1] == TypeTile::Stone)
-	{
-		countOfNeighbor.y += 1;
-	}
-
-	if (!isTileOnBorderBottom && generatedMap[coordOfTile.x][coordOfTile.y + 1] == TypeTile::Wall)
-	{
-		countOfNeighbor.x += 1;
-	}
-	if (!isTileOnBorderBottom && generatedMap[coordOfTile.x][coordOfTile.y + 1] == TypeTile::Stone)
-	{
-		countOfNeighbor.y += 1;
-	}
-
-	if (!isTileOnBorderRight && !isTileOnBorderBottom && generatedMap[coordOfTile.x + 1][coordOfTile.y + 1] == TypeTile::Wall)
-	{
-		countOfNeighbor.x += 1;
-	}
-	if (!isTileOnBorderRight && !isTileOnBorderBottom && generatedMap[coordOfTile.x + 1][coordOfTile.y + 1] == TypeTile::Stone)
-	{
-		countOfNeighbor.y += 1;
+		for (int iterY = -1; iterY <= 1; iterY++)
+		{
+			if (coordOfTile.x + iterX < 0)
+			{
+				continue;
+			}
+			if (coordOfTile.x + iterX >= WIDTH_MAP)
+			{
+				continue;
+			}
+			if (coordOfTile.y + iterY < 0)
+			{
+				continue;
+			}
+			if (coordOfTile.y + iterY >= HEIGHT_MAP)
+			{
+				continue;
+			}
+			if (iterX == 0 && iterY == 0)
+			{
+				continue;
+			}
+			if (generatedMap[iterX + coordOfTile.x][iterY + coordOfTile.y] == TypeTile::Wall)
+			{
+				countOfNeighbor++;
+			}
+		}
 	}
 
 	return countOfNeighbor;
@@ -150,8 +76,9 @@ void Map::GetNextIteration()
 	{
 		for (int iterY = 0; iterY < HEIGHT_MAP; iterY++)
 		{
-			sf::Vector2i countOfNeighbor = GetCountOfNeighbor({ iterX, iterY });
-			if (countOfNeighbor.x > 4)
+			int countOfNeighbor = GetCountOfNeighbor({ iterX, iterY });
+			
+			if (countOfNeighbor > 4)
 			{
 				newGeneratedMap[iterX][iterY] = TypeTile::Wall;
 			}
@@ -190,7 +117,88 @@ void Map::CreateTileForMap()
 	}
 }
 
-void Map::UpdateMap(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, sf::Vector2f viewPosition)
+//TODO: оптимизировать с помощью структур данных
+void Map::SetNeighborOfTile(int iterX, int iterY, int iterForVector, int numberOfTile)
+{
+	if (iterX - 1 > 0)
+	{
+		if (generatedMap[iterX - 1][iterY] == TypeTile::Stone)
+		{
+			mapOfTexture[iterForVector]->neighboursExist[NORTH] = true;
+			mapOfTexture[iterForVector]->edgeExist[NORTH] = false;
+		}
+		else
+		{
+			mapOfTexture[iterForVector]->neighboursExist[NORTH] = false;
+			mapOfTexture[iterForVector]->edgeExist[NORTH] = false;
+		}
+	}
+	else
+	{
+		mapOfTexture[iterForVector]->neighboursExist[NORTH] = true;
+		mapOfTexture[iterForVector]->edgeExist[NORTH] = false;
+	}
+
+	if (iterY - 1 > 0)
+	{
+		if (generatedMap[iterX][iterY - 1] == TypeTile::Stone)
+		{
+			mapOfTexture[iterForVector]->neighboursExist[WEST] = true;
+			mapOfTexture[iterForVector]->edgeExist[WEST] = false;
+		}
+		else
+		{
+			mapOfTexture[iterForVector]->neighboursExist[WEST] = false;
+			mapOfTexture[iterForVector]->edgeExist[WEST] = false;
+		}
+	}
+	else
+	{
+		mapOfTexture[iterForVector]->neighboursExist[WEST] = true;
+		mapOfTexture[iterForVector]->edgeExist[WEST] = false;
+	}
+
+	if (iterX + 1 < WIDTH_MAP)
+	{
+		if (generatedMap[iterX + 1][iterY] == TypeTile::Stone)
+		{
+			mapOfTexture[iterForVector]->neighboursExist[SOUTH] = true;
+			mapOfTexture[iterForVector]->edgeExist[SOUTH] = false;
+		}
+		else
+		{
+			mapOfTexture[iterForVector]->neighboursExist[SOUTH] = false;
+			mapOfTexture[iterForVector]->edgeExist[SOUTH] = false;
+		}
+	}
+	else
+	{
+		mapOfTexture[iterForVector]->neighboursExist[SOUTH] = true;
+		mapOfTexture[iterForVector]->edgeExist[SOUTH] = false;
+	}
+
+	if (iterY + 1 < HEIGHT_MAP)
+	{
+		if (generatedMap[iterX][iterY + 1] == TypeTile::Stone)
+		{
+			mapOfTexture[iterForVector]->neighboursExist[EAST] = true;
+			mapOfTexture[iterForVector]->edgeExist[EAST] = false;
+		}
+		else
+		{
+			mapOfTexture[iterForVector]->neighboursExist[EAST] = false;
+			mapOfTexture[iterForVector]->edgeExist[EAST] = false;
+		}
+	}
+	else
+	{
+		mapOfTexture[iterForVector]->neighboursExist[EAST] = true;
+		mapOfTexture[iterForVector]->edgeExist[EAST] = false;
+	}
+}
+
+//TODO: декомпозировать функцию, так чтобы строк было небольше 20 и небольше 2 вложенностей
+void Map::UpdateMap(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, const sf::Vector2f& viewPosition)
 {
 	if (!isMapRenderFirstTime)
 	{
@@ -213,13 +221,14 @@ void Map::UpdateMap(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, sf::Vector2
 		for (int iterY = 0; iterY < HEIGHT_MAP; iterY++)
 		{
 			int numberOfTile = iterX * HEIGHT_MAP + iterY;
-			int yCoord = std::floor(numberOfTile / HEIGHT_MAP);
-			int xCoord = numberOfTile - HEIGHT_MAP * yCoord;
+			int yCoord = iterX;
+			int xCoord = iterY;
+
+			SetNeighborOfTile(iterX, iterY, iterForVector, numberOfTile);
 
 			if ((xCoord * WIDTH_TILE >= viewPosition.x && xCoord * WIDTH_TILE <= WIDTH_WINDOW + viewPosition.x) &&
 				(yCoord * HEIGHT_TILE >= viewPosition.y && yCoord * HEIGHT_TILE <= HEIGHT_WINDOW + viewPosition.y))
 			{
-
 				if (generatedMap[iterX][iterY] == TypeTile::Wall)
 				{
 					mapOfTexture[iterForVector]->number = numberOfTile;
@@ -285,4 +294,9 @@ void Map::ChangeColorOfTile(int numberOfTile)
 			break;
 		}
 	}
+}
+
+std::vector<Tile*> Map::GetVectorTiles()
+{
+	return mapOfTexture;
 }

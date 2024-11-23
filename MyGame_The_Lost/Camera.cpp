@@ -55,7 +55,17 @@ void Camera::KeyPlayerHandler()
 	m_player->UpdateMovement(playerMovement);
 }
 
-void Camera::EventHandler(sf::Event& event)
+void Camera::OnMousePressed(const sf::Event::MouseButtonEvent& event, sf::Vector2f& mousePosition)
+{
+	mousePosition = { float(event.x), float(event.y) };
+}
+
+void Camera::OnMouseMoved(const sf::Event::MouseMoveEvent& event, sf::Vector2f& mousePosition)
+{
+	mousePosition = { float(event.x), float(event.y) };
+}
+
+void Camera::EventHandler(sf::Event& event, sf::Vector2f& mouseCoords, bool& isMouseMove)
 {
 	KeyPlayerHandler();
 	KeyCameraHandler();
@@ -64,6 +74,16 @@ void Camera::EventHandler(sf::Event& event)
 	{
 		case sf::Event::Closed:
 			m_window.close();
+			break;
+		case sf::Event::MouseButtonPressed:
+			OnMousePressed(event.mouseButton, mouseCoords);
+			break;
+		case sf::Event::MouseMoved:
+			OnMouseMoved(event.mouseMove, mouseCoords);
+			isMouseMove = true;
+			break;
+		case sf::Event::MouseButtonReleased:
+			isMouseMove = false;
 			break;
 		default:
 			break;
@@ -80,12 +100,12 @@ sf::Vector2f Camera::GetViewPosition()
 	return viewPosition;
 }
 
-void Camera::Update()
+void Camera::Update(sf::Vector2f& mouseCoords, bool& isMouseMove)
 {
 	sf::Event event;
 	while (m_window.pollEvent(event))
 	{
-		EventHandler(event);
+		EventHandler(event, mouseCoords, isMouseMove);
 	}
 }
 

@@ -9,18 +9,23 @@ class Map
 {
 public:
 	Map(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, sf::Vector2f viewPosition);
+
 	void DrawMap(sf::RenderWindow& window);
-	void UpdateMap(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, sf::Vector2f viewPosition);
+	void UpdateMap(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, const sf::Vector2f& viewPosition);
 
 	TypeTile GetTypeOfTile(int numberOfTile);
 	void ChangeColorOfTile(int numberOfTile);
 
+	std::vector<Tile*> GetVectorTiles();
+
 private:
 	void CreateTileForMap();
 
-	sf::Vector2i GetCountOfNeighbor(sf::Vector2i coordOfTile);
+	int GetCountOfNeighbor(sf::Vector2i coordOfTile);
 	void SetRandomGeneration();
 	void GetNextIteration();
+
+	void SetNeighborOfTile(int iterX, int iterY, int iterForVector, int numberOfTile);
 
 	void GenerateMap(int countOfIteration);
 
