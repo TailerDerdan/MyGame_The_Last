@@ -29,7 +29,7 @@ private:
 	void CalculateVisibilityPolygon(sf::Vector2f start, float radius);
 
 private:
-	std::vector<sf::ConvexShape*> triangles;
+	std::vector<sf::ConvexShape> triangles;
 
 	sf::Vector2f m_mouseCoord;
 

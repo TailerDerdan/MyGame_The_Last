@@ -31,34 +31,37 @@ void ShadowLight::Update(sf::Vector2f& mouseCoords, const bool& isMouseMove)
 	if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && vecVisibilityPolygonPoints.size() > 1)
 	{
 		triangles.clear();
-		std::cout << vecVisibilityPolygonPoints.size() << std::endl;
+		//std::cout << vecVisibilityPolygonPoints.size() << std::endl;
 		for (size_t iter = 0; iter < vecVisibilityPolygonPoints.size() - 1; iter++)
 		{
-			sf::ConvexShape* triangle = new sf::ConvexShape();
+			sf::ConvexShape triangle;
 
-			triangle->setPointCount(3);
+			triangle.setPointCount(3);
 
-			triangle->setFillColor(sf::Color(255, 255, 255));
+			triangle.setOutlineColor(sf::Color(255, 255, 255));
+			triangle.setOutlineThickness(0.1f);
 
 			sf::Vector2f startLineCoord = { std::get<1>(vecVisibilityPolygonPoints[iter]),
 				std::get<2>(vecVisibilityPolygonPoints[iter]) };
+
 			sf::Vector2f endLineCoord = { std::get<1>(vecVisibilityPolygonPoints[iter + 1]),
 				std::get<2>(vecVisibilityPolygonPoints[iter + 1]) };
 
-			triangle->setPoint(0, m_mouseCoord);
-			triangle->setPoint(1, startLineCoord);
-			triangle->setPoint(2, endLineCoord);
+			triangle.setPoint(0, m_mouseCoord);
+			triangle.setPoint(1, startLineCoord);
+			triangle.setPoint(2, endLineCoord);
 
 			triangles.push_back(triangle);
 
 			startLineCoord = { std::get<1>(vecVisibilityPolygonPoints[vecVisibilityPolygonPoints.size() - 1]),
 				std::get<2>(vecVisibilityPolygonPoints[vecVisibilityPolygonPoints.size() - 1]) };
+
 			endLineCoord = { std::get<1>(vecVisibilityPolygonPoints[0]),
 				std::get<2>(vecVisibilityPolygonPoints[0]) };
 
-			triangle->setPoint(0, m_mouseCoord);
-			triangle->setPoint(1, startLineCoord);
-			triangle->setPoint(2, endLineCoord);
+			triangle.setPoint(0, m_mouseCoord);
+			triangle.setPoint(1, startLineCoord);
+			triangle.setPoint(2, endLineCoord);
 
 			triangles.push_back(triangle);
 		}
@@ -90,7 +93,7 @@ void ShadowLight::DrawTriangles(sf::RenderWindow& window)
 {
 	for (auto triangle : triangles)
 	{
-		window.draw(*triangle);
+		window.draw(triangle);
 	}
 }
 
@@ -263,6 +266,8 @@ void ShadowLight::CalculateVisibilityPolygon(sf::Vector2f start, float radius)
 
 			float base_ang = toDegrees(atan2f(rd.y, rd.x));
 
+			base_ang -= 90;
+
 			float angular = 0;
 
 			for (int iter2 = 0; iter2 < 3; iter2++)
@@ -327,4 +332,7 @@ void ShadowLight::CalculateVisibilityPolygon(sf::Vector2f start, float radius)
 		{
 			return std::get<0>(point1) < std::get<0>(point2);
 		});
+
+	vecVisibilityPolygonPoints.erase(std::unique(vecVisibilityPolygonPoints.begin(), vecVisibilityPolygonPoints.end()),
+		vecVisibilityPolygonPoints.end());
 }
