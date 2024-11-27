@@ -1,16 +1,17 @@
 #include "Map.h"
 
-Map::Map(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, sf::Vector2f viewPosition)
+Map::Map(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, const sf::View& view, sf::RenderTexture& castTexture, sf::Texture& textureOfCaveOuter)
 {
-	textureOfCave.loadFromFile("../assets/textureForCave.jpg");
+	castTexture.create(WIDTH_WINDOW, HEIGHT_WINDOW);
 
 	mapOfTexture.resize(WIDTH_MAP * HEIGHT_MAP + 1);
+	textureOfCave = textureOfCaveOuter;
 
 	GenerateMap(4);
 	CreateTileForMap();
-	UpdateMap(WIDTH_WINDOW, HEIGHT_WINDOW, viewPosition);
+	UpdateMap(WIDTH_WINDOW, HEIGHT_WINDOW, view, castTexture);
 
-	previousCoordView = viewPosition;
+	previousCoordView = sf::Vector2f{ view.getCenter().x - view.getSize().x / 2, view.getCenter().y - view.getSize().y / 2 };
 }
 
 int Map::GetCountOfNeighbor(sf::Vector2i coordOfTile)
@@ -198,8 +199,9 @@ void Map::SetNeighborOfTile(int iterX, int iterY, int iterForVector, int numberO
 }
 
 //TODO: декомпозировать функцию, так чтобы строк было небольше 20 и небольше 2 вложенностей
-void Map::UpdateMap(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, const sf::Vector2f& viewPosition)
+void Map::UpdateMap(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, const sf::View& view, sf::RenderTexture& castTexture)
 {
+	sf::Vector2f viewPosition = sf::Vector2f{ view.getCenter().x - view.getSize().x / 2, view.getCenter().y - view.getSize().y / 2 };
 	if (!isMapRenderFirstTime)
 	{
 		isMapRenderFirstTime = true;
@@ -213,7 +215,9 @@ void Map::UpdateMap(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, const sf::V
 	}
 
 	previousCoordView = viewPosition;
-
+	castTexture.clear();
+	castTexture.setView(view);
+	
 	int iterForVector = 0;
 
 	for (int iterX = 0; iterX < WIDTH_MAP; iterX++)
@@ -252,25 +256,17 @@ void Map::UpdateMap(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, const sf::V
 
 					mapOfTexture[iterForVector]->sprite.setPosition({ float(xCoord * WIDTH_TILE), float(yCoord * HEIGHT_TILE) });
 				}
+				castTexture.draw(mapOfTexture[iterForVector]->sprite);
+				castTexture.display();
 				iterForVector++;
 			}
 		}
 	}
 }
 
-void Map::DrawMap(sf::RenderWindow& window)
+void Map::DrawMap(sf::RenderWindow& window, sf::RenderTexture& castTexture)
 {
-	for (long iter = 0; iter < mapOfTexture.size(); iter++)
-	{
-		if (mapOfTexture[iter])
-		{
-			window.draw(mapOfTexture[iter]->sprite);
-		}
-		else
-		{
-			break;
-		}
-	}
+	window.draw(sf::Sprite(castTexture.getTexture()));
 }
 
 TypeTile Map::GetTypeOfTile(int numberOfTile)

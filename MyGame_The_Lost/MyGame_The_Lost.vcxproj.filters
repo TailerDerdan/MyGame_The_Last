@@ -51,4 +51,8 @@
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="shadow.frag" />
+    <None Include="shadow.vert" />
+  </ItemGroup>
 </Project>

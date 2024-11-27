@@ -113,3 +113,8 @@ void Camera::SetPlayer(Player* player)
 {
 	m_player = player;
 }
+
+sf::View Camera::GetView()
+{
+	return m_view;
+}
