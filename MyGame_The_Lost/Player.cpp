@@ -5,7 +5,7 @@ Player::Player(Map* map)
 	texture.loadFromFile("../assets/moving.png");
 	player.setTexture(texture);
 	player.setTextureRect({ 0, 0, PLAYER_WIDTH, PLAYER_HEIGHT });
-	player.setPosition({ 200, 50 });
+	player.setPosition({ 250, 50 });
 
 	m_map = map;
 }
@@ -187,7 +187,7 @@ void Player::PlayerMoveToBottomSide()
 	sf::Vector2f direction = { motion.x / moduleMotion, motion.y / moduleMotion };
 
 	float deltaTime = 0.016;
-	float movementOffset = SPEED_PLAYER * deltaTime;
+	float movementOffset = SPEED_PLAYER_FOR_FALL * deltaTime;
 
 	sf::Vector2f newDirection = { direction.x * movementOffset, direction.y * movementOffset };
 

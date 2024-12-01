@@ -5,12 +5,13 @@
 constexpr unsigned WINDOW_WIDTH = 1920;
 constexpr unsigned WINDOW_HEIGHT = 1080;
 
-const float SPEED_CAMERA = 12.5f;
+const float SPEED_CAMERA = 1.0f;
 
 class Camera
 {
 public:
 	sf::RenderWindow m_window;
+	sf::RenderTexture castTexture;
 
 	Camera();
 
@@ -18,6 +19,7 @@ public:
 	sf::Vector2f GetViewPosition();
 
 	void SetPlayer(Player* player);
+	sf::View GetView();
 
 private:
 	void OnMousePressed(const sf::Event::MouseButtonEvent& event, sf::Vector2f& mousePosition);

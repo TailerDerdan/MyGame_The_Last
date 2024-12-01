@@ -12,14 +12,19 @@ struct Edge
 class ShadowLight
 {
 public:
-	ShadowLight(Map* map, sf::Vector2f mouseCoords);
+	sf::Shader shadowShader;
+
+	ShadowLight(Map* map, sf::Vector2f mouseCoords, const int WINDOW_WIDTH, const int WINDOW_HEIGHT);
 
 	void UpdateMouseCoords(sf::Vector2f& newCoord);
-	void Update(sf::Vector2f& mouseCoords, const bool& isMouseMove);
+	void Update(const sf::Vector2f& mouseCoords, const bool& isMouseMove, sf::RenderWindow& window);
 
 	void DrawLines(sf::RenderWindow& window);
 
-	void DrawTriangles(sf::RenderWindow& window);
+	void DrawTriangles(sf::RenderWindow& window, const sf::View& view);
+
+	void SetVecRays(sf::Vector2f mouseCoords);
+	void SetViewForRenderTexture(const sf::View& view);
 
 private:
 	float toDegrees(float radians);
@@ -29,7 +34,8 @@ private:
 	void CalculateVisibilityPolygon(sf::Vector2f start, float radius);
 
 private:
-	std::vector<sf::ConvexShape*> triangles;
+	sf::RenderTexture castTexture;
+	std::vector<sf::Vertex> vertices;
 
 	sf::Vector2f m_mouseCoord;
 
@@ -37,4 +43,6 @@ private:
 
 	std::vector<Edge*> vecEdges;
 	std::vector<std::tuple<float, float, float>> vecVisibilityPolygonPoints;
+
+	std::vector<Edge*> vecRays;
 };

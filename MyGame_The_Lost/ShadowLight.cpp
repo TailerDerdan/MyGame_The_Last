@@ -1,9 +1,77 @@
 #include "ShadowLight.h"
 
-ShadowLight::ShadowLight(Map* map, sf::Vector2f mouseCoords)
+//GLuint createUBO(const std::vector<GLubyte>& data) {
+//	GLuint ubo;
+//	glGenBuffers(1, &ubo); // Создание UBO
+//	glBindBuffer(GL_UNIFORM_BUFFER, ubo);
+//	glBufferData(GL_UNIFORM_BUFFER, data.size() * sizeof(GLubyte), data.data(), GL_STATIC_DRAW);
+//	glBindBuffer(GL_UNIFORM_BUFFER, 0); // Отвязываем буфер
+//	return ubo;
+//}
+
+ShadowLight::ShadowLight(Map* map, sf::Vector2f mouseCoords, const int WINDOW_WIDTH, const int WINDOW_HEIGHT)
 {
+	shadowShader.loadFromFile("shadow.vert", "shadow.frag");
+
 	m_map = map;
-	Update(mouseCoords, false);
+
+	vecRays.resize(4);
+
+	//castTexture.create(WIDTH_MAP * WIDTH_TILE, HEIGHT_MAP * HEIGHT_TILE);
+	castTexture.create(WINDOW_WIDTH, WINDOW_HEIGHT);
+	castTexture.setSmooth(true);
+
+	vertices.reserve(500);
+
+	//std::vector<GLubyte> mapOfWall(30800);
+
+	//std::array<std::array<int, HEIGHT_MAP>, WIDTH_MAP> mapOfEnum = map->GetMapInEnum();
+
+	//for (size_t iterX = 0; iterX < WIDTH_MAP; iterX++)
+	//{
+	//	for (size_t iterY = 0; iterY < HEIGHT_MAP; iterY++)
+	//	{
+	//		if (mapOfEnum[iterX][iterY] == 1)	
+	//		{
+	//			int numberOfTile = iterX * HEIGHT_MAP + iterY;
+	//			mapOfWall[numberOfTile] = true;
+	//		}
+	//	}
+	//}
+
+	//GLuint texture;
+	//glGenTextures(1, &texture);
+	//glBindTexture(GL_TEXTURE_1D, texture);
+
+	//// Загрузка данных в текстуру
+	//glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, 30800, 0, GL_RED, GL_FLOAT, mapOfWall);
+
+	//// Установка параметров фильтрации
+	//glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	//glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	//
+	//shadowShader.setUniform("u_resolution", sf::Vector2f(WINDOW_WIDTH, WINDOW_HEIGHT));
+	//shadowShader.setUniform("mapOfWall", mapOfWall);
+}
+
+void ShadowLight::SetVecRays(sf::Vector2f mouseCoord)
+{
+	for (size_t iter = 0; iter < 4; iter++)
+	{
+		Edge* edge = new Edge();
+		vecRays[iter] = edge;
+	}
+	vecRays[0]->start = {mouseCoord.x, mouseCoord.y - 1000.0f};
+	vecRays[0]->end = {mouseCoord.x, mouseCoord.y + 1000.0f};
+
+	vecRays[1]->start = { mouseCoord.x - 1000.0f, mouseCoord.y + 1000.0f };
+	vecRays[1]->end = { mouseCoord.x + 1000.0f, mouseCoord.y - 1000.0f };
+
+	vecRays[2]->start = { mouseCoord.x - 1000.0f, mouseCoord.y};
+	vecRays[2]->end = { mouseCoord.x + 1000.0f, mouseCoord.y };
+
+	vecRays[3]->start = { mouseCoord.x - 1000.0f, mouseCoord.y - 1000.0f };
+	vecRays[3]->end = { mouseCoord.x + 1000.0f, mouseCoord.y + 1000.0f };
 }
 
 void ShadowLight::UpdateMouseCoords(sf::Vector2f& newCoord)
@@ -11,58 +79,56 @@ void ShadowLight::UpdateMouseCoords(sf::Vector2f& newCoord)
 	m_mouseCoord = newCoord;
 }
 
-void ShadowLight::Update(sf::Vector2f& mouseCoords, const bool& isMouseMove)
+void ShadowLight::SetViewForRenderTexture(const sf::View& view)
 {
-	m_mouseCoord = mouseCoords;
-	if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+	castTexture.setView(view);
+}
+
+void ShadowLight::Update(const sf::Vector2f& mouseCoords, const bool& isMouseMove, sf::RenderWindow& window)
+{
+	/*m_mouseCoord = mouseCoords;
+	shadowShader.setUniform("u_mouse", m_mouseCoord);
+	castTexture.clear();
+	castTexture.display();*/
+	/*if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
 	{
 		if (isMouseMove)
 		{
 			ConvertTileMapToPolyMap();
-			CalculateVisibilityPolygon(m_mouseCoord, 10.f);
+			CalculateVisibilityPolygon(m_mouseCoord, 100.f);
 		}
 	}
 	else
 	{
+		castTexture.clear();
 		vecVisibilityPolygonPoints.clear();
-		triangles.clear();
 	}
 
 	if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && vecVisibilityPolygonPoints.size() > 1)
 	{
-		triangles.clear();
-		std::cout << vecVisibilityPolygonPoints.size() << std::endl;
-		for (size_t iter = 0; iter < vecVisibilityPolygonPoints.size() - 1; iter++)
+		vertices.clear();
+		castTexture.clear();
+		for (uint32_t i = 0; i < vecVisibilityPolygonPoints.size(); i++)
 		{
-			sf::ConvexShape* triangle = new sf::ConvexShape();
-
-			triangle->setPointCount(3);
-
-			triangle->setFillColor(sf::Color(255, 255, 255));
-
-			sf::Vector2f startLineCoord = { std::get<1>(vecVisibilityPolygonPoints[iter]),
-				std::get<2>(vecVisibilityPolygonPoints[iter]) };
-			sf::Vector2f endLineCoord = { std::get<1>(vecVisibilityPolygonPoints[iter + 1]),
-				std::get<2>(vecVisibilityPolygonPoints[iter + 1]) };
-
-			triangle->setPoint(0, m_mouseCoord);
-			triangle->setPoint(1, startLineCoord);
-			triangle->setPoint(2, endLineCoord);
-
-			triangles.push_back(triangle);
-
-			startLineCoord = { std::get<1>(vecVisibilityPolygonPoints[vecVisibilityPolygonPoints.size() - 1]),
-				std::get<2>(vecVisibilityPolygonPoints[vecVisibilityPolygonPoints.size() - 1]) };
-			endLineCoord = { std::get<1>(vecVisibilityPolygonPoints[0]),
-				std::get<2>(vecVisibilityPolygonPoints[0]) };
-
-			triangle->setPoint(0, m_mouseCoord);
-			triangle->setPoint(1, startLineCoord);
-			triangle->setPoint(2, endLineCoord);
-
-			triangles.push_back(triangle);
+			sf::Vertex vertex;
+			vertex.position.x = std::get<1>(vecVisibilityPolygonPoints[i]);
+			vertex.position.y = std::get<2>(vecVisibilityPolygonPoints[i]);
+			vertices.emplace_back(vertex);
 		}
-	}
+		
+		if (!vecVisibilityPolygonPoints.empty())
+		{
+			sf::Vertex vertex;
+
+			vertex.position.x = std::get<1>(vecVisibilityPolygonPoints[0]);
+			vertex.position.y = std::get<2>(vecVisibilityPolygonPoints[0]);
+
+			vertices.emplace_back(vertex);
+		}
+		
+		castTexture.draw(vertices.data(), vertices.size(), sf::TriangleFan);
+		castTexture.display();
+	}*/
 }
 
 void ShadowLight::DrawLines(sf::RenderWindow& window)
@@ -86,12 +152,10 @@ void DisplayEdge(Edge edge)
 	std::cout << edge.start.x << " " << edge.start.y << " " << edge.end.x << " " << edge.end.y << std::endl;
 }
 
-void ShadowLight::DrawTriangles(sf::RenderWindow& window)
+void ShadowLight::DrawTriangles(sf::RenderWindow& window, const sf::View& view)
 {
-	for (auto triangle : triangles)
-	{
-		window.draw(*triangle);
-	}
+	castTexture.setView(view);
+	window.draw(sf::Sprite(castTexture.getTexture()), &shadowShader);
 }
 
 void ShadowLight::ConvertTileMapToPolyMap()
@@ -251,8 +315,8 @@ float ShadowLight::toRadians(float degrees)
 void ShadowLight::CalculateVisibilityPolygon(sf::Vector2f start, float radius)
 {
 	vecVisibilityPolygonPoints.clear();
-
-	for (auto &edge : vecEdges)
+	SetVecRays(start);
+	for (auto& edge : vecEdges)
 	{
 		for (int iter = 0; iter < 2; iter++)
 		{
@@ -262,6 +326,8 @@ void ShadowLight::CalculateVisibilityPolygon(sf::Vector2f start, float radius)
 			rd.y = (iter == 0 ? edge->start.y : edge->end.y) - start.y;
 
 			float base_ang = toDegrees(atan2f(rd.y, rd.x));
+
+			base_ang -= 90;
 
 			float angular = 0;
 
@@ -289,7 +355,7 @@ void ShadowLight::CalculateVisibilityPolygon(sf::Vector2f start, float radius)
 
 				bool isValidTriangle = false;
 
-				for (auto &edge2 : vecEdges)
+				for (auto& edge2 : vecEdges)
 				{
 					sf::Vector2f vectorEdge = { edge2->end.x - edge2->start.x, edge2->end.y - edge2->start.y };
 
@@ -322,9 +388,12 @@ void ShadowLight::CalculateVisibilityPolygon(sf::Vector2f start, float radius)
 		}
 	}
 
-	std::sort(vecVisibilityPolygonPoints.begin(), vecVisibilityPolygonPoints.end(), 
-		[&](const std::tuple<float, float, float> &point1, const std::tuple<float, float, float> &point2)
+	std::sort(vecVisibilityPolygonPoints.begin(), vecVisibilityPolygonPoints.end(),
+		[&](const std::tuple<float, float, float>& point1, const std::tuple<float, float, float>& point2)
 		{
 			return std::get<0>(point1) < std::get<0>(point2);
 		});
+
+	vecVisibilityPolygonPoints.erase(std::unique(vecVisibilityPolygonPoints.begin(), vecVisibilityPolygonPoints.end()),
+		vecVisibilityPolygonPoints.end());
 }

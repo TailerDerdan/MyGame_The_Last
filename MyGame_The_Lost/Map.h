@@ -8,15 +8,16 @@ const int HEIGHT_MAP = 200;
 class Map
 {
 public:
-	Map(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, sf::Vector2f viewPosition);
+	Map(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, const sf::View& view, sf::RenderTexture& castTexture, sf::Texture& textureOfCaveOuter);
 
-	void DrawMap(sf::RenderWindow& window);
-	void UpdateMap(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, const sf::Vector2f& viewPosition);
+	void DrawMap(sf::RenderWindow& window, sf::RenderTexture& castTexture);
+	void UpdateMap(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, const sf::View& view, sf::RenderTexture& castTexture);
 
 	TypeTile GetTypeOfTile(int numberOfTile);
 	void ChangeColorOfTile(int numberOfTile);
 
 	std::vector<Tile*> GetVectorTiles();
+	std::array<std::array<int, HEIGHT_MAP>, WIDTH_MAP> GetMapInEnum();
 
 private:
 	void CreateTileForMap();
