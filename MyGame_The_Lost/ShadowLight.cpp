@@ -1,399 +1,109 @@
 #include "ShadowLight.h"
 
-//GLuint createUBO(const std::vector<GLubyte>& data) {
-//	GLuint ubo;
-//	glGenBuffers(1, &ubo); // Создание UBO
-//	glBindBuffer(GL_UNIFORM_BUFFER, ubo);
-//	glBufferData(GL_UNIFORM_BUFFER, data.size() * sizeof(GLubyte), data.data(), GL_STATIC_DRAW);
-//	glBindBuffer(GL_UNIFORM_BUFFER, 0); // Отвязываем буфер
-//	return ubo;
-//}
+ShadowLight::ShadowLight() {      }
+ShadowLight::~ShadowLight() {     }
 
-ShadowLight::ShadowLight(Map* map, sf::Vector2f mouseCoords, const int WINDOW_WIDTH, const int WINDOW_HEIGHT)
+std::vector<uint32_t> ShadowLight::MakeCircle(const std::vector<bool>& mapOfLightInBool)
 {
-	shadowShader.loadFromFile("shadow.vert", "shadow.frag");
+    std::vector<uint32_t> matrix(200, 0);
 
-	m_map = map;
+    for (int y = 0; y < 200; ++y)
+    {
+        for (int x = 0; x < 154; ++x)
+        {
+            if (mapOfLightInBool[x * 200 + y])
+            {
+                matrix[y] |= (1 << x);
+            }
+        }
+    }
 
-	vecRays.resize(4);
-
-	//castTexture.create(WIDTH_MAP * WIDTH_TILE, HEIGHT_MAP * HEIGHT_TILE);
-	castTexture.create(WINDOW_WIDTH, WINDOW_HEIGHT);
-	castTexture.setSmooth(true);
-
-	vertices.reserve(500);
-
-	//std::vector<GLubyte> mapOfWall(30800);
-
-	//std::array<std::array<int, HEIGHT_MAP>, WIDTH_MAP> mapOfEnum = map->GetMapInEnum();
-
-	//for (size_t iterX = 0; iterX < WIDTH_MAP; iterX++)
-	//{
-	//	for (size_t iterY = 0; iterY < HEIGHT_MAP; iterY++)
-	//	{
-	//		if (mapOfEnum[iterX][iterY] == 1)	
-	//		{
-	//			int numberOfTile = iterX * HEIGHT_MAP + iterY;
-	//			mapOfWall[numberOfTile] = true;
-	//		}
-	//	}
-	//}
-
-	//GLuint texture;
-	//glGenTextures(1, &texture);
-	//glBindTexture(GL_TEXTURE_1D, texture);
-
-	//// Загрузка данных в текстуру
-	//glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, 30800, 0, GL_RED, GL_FLOAT, mapOfWall);
-
-	//// Установка параметров фильтрации
-	//glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	//glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	//
-	//shadowShader.setUniform("u_resolution", sf::Vector2f(WINDOW_WIDTH, WINDOW_HEIGHT));
-	//shadowShader.setUniform("mapOfWall", mapOfWall);
+    return matrix;
 }
 
-void ShadowLight::SetVecRays(sf::Vector2f mouseCoord)
+std::vector<GreedyQuad> ShadowLight::GreedyMeshBinaryPlane(std::vector<uint32_t>& data, int size)
 {
-	for (size_t iter = 0; iter < 4; iter++)
-	{
-		Edge* edge = new Edge();
-		vecRays[iter] = edge;
-	}
-	vecRays[0]->start = {mouseCoord.x, mouseCoord.y - 1000.0f};
-	vecRays[0]->end = {mouseCoord.x, mouseCoord.y + 1000.0f};
+    std::vector<GreedyQuad> res;
 
-	vecRays[1]->start = { mouseCoord.x - 1000.0f, mouseCoord.y + 1000.0f };
-	vecRays[1]->end = { mouseCoord.x + 1000.0f, mouseCoord.y - 1000.0f };
+    for (int row = 0; row < data.size(); row++)
+    {
+        int y = 0;
+        uint32_t height = 0;
+        while (y < size)
+        {
+            y += CountTrailingZeros(data[row] >> (int)y);
 
-	vecRays[2]->start = { mouseCoord.x - 1000.0f, mouseCoord.y};
-	vecRays[2]->end = { mouseCoord.x + 1000.0f, mouseCoord.y };
+            if (y >= size)
+            {
+                break;
+            }
 
-	vecRays[3]->start = { mouseCoord.x - 1000.0f, mouseCoord.y - 1000.0f };
-	vecRays[3]->end = { mouseCoord.x + 1000.0f, mouseCoord.y + 1000.0f };
+            int h = (int)CountTrailingOnes(data[row] >> (int)y);
+            uint32_t hAsMask;
+            hAsMask = (1u << (int)h) - 1;
+
+            uint32_t mask = hAsMask << (int)y;
+            int w = 1;
+            while (row + w < size)
+            {
+                uint32_t nextRowH = (data[row + w] >> y) & hAsMask;
+                if (nextRowH != hAsMask)
+                {
+                    height = nextRowH;
+                    break;
+                }
+
+                data[row + w] &= ~mask;
+                w++;
+            }
+            GreedyQuad quad;
+
+            quad.x = row - 1;
+            quad.y = y - 1;
+            quad.w = w + 2;
+            quad.h = h + 2;
+
+            res.push_back(quad);
+            y += h;
+        }
+    }
+
+    return res;
 }
 
-void ShadowLight::UpdateMouseCoords(sf::Vector2f& newCoord)
+std::vector<sf::Vertex> ShadowLight::CreateFromGreed(const std::vector<GreedyQuad>& quads)
 {
-	m_mouseCoord = newCoord;
-}
+    std::vector<sf::Vertex> res;
+    const float textureSize = 25;
 
-void ShadowLight::SetViewForRenderTexture(const sf::View& view)
-{
-	castTexture.setView(view);
-}
+    for (auto i : quads)
+    {
+        sf::Vertex topLeft;
+        sf::Vertex topRight;
+        sf::Vertex botRight;
+        sf::Vertex botLeft;
 
-void ShadowLight::Update(const sf::Vector2f& mouseCoords, const bool& isMouseMove, sf::RenderWindow& window)
-{
-	/*m_mouseCoord = mouseCoords;
-	shadowShader.setUniform("u_mouse", m_mouseCoord);
-	castTexture.clear();
-	castTexture.display();*/
-	/*if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
-	{
-		if (isMouseMove)
-		{
-			ConvertTileMapToPolyMap();
-			CalculateVisibilityPolygon(m_mouseCoord, 100.f);
-		}
-	}
-	else
-	{
-		castTexture.clear();
-		vecVisibilityPolygonPoints.clear();
-	}
+        topLeft.position = sf::Vector2f(i.x, i.y) * textureSize;
+        topLeft.texCoords = { 0, 0 };
+        topLeft.color = sf::Color(255, 255, 255);
 
-	if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && vecVisibilityPolygonPoints.size() > 1)
-	{
-		vertices.clear();
-		castTexture.clear();
-		for (uint32_t i = 0; i < vecVisibilityPolygonPoints.size(); i++)
-		{
-			sf::Vertex vertex;
-			vertex.position.x = std::get<1>(vecVisibilityPolygonPoints[i]);
-			vertex.position.y = std::get<2>(vecVisibilityPolygonPoints[i]);
-			vertices.emplace_back(vertex);
-		}
-		
-		if (!vecVisibilityPolygonPoints.empty())
-		{
-			sf::Vertex vertex;
+        topRight.position = sf::Vector2f(i.x + i.w, i.y) * textureSize;
+        topRight.texCoords = { 0, 1 };
+        topLeft.color = sf::Color(255, 255, 255);
 
-			vertex.position.x = std::get<1>(vecVisibilityPolygonPoints[0]);
-			vertex.position.y = std::get<2>(vecVisibilityPolygonPoints[0]);
+        botRight.position = sf::Vector2f(i.x + i.w, i.y + i.h) * textureSize;
+        topLeft.color = sf::Color(255, 255, 255);
+        botRight.texCoords = { 1, 1 };
 
-			vertices.emplace_back(vertex);
-		}
-		
-		castTexture.draw(vertices.data(), vertices.size(), sf::TriangleFan);
-		castTexture.display();
-	}*/
-}
+        botLeft.position = sf::Vector2f(i.x, i.y + i.h) * textureSize;
+        botLeft.texCoords = { 1, 0 };
+        topLeft.color = sf::Color(255, 255, 255);
 
-void ShadowLight::DrawLines(sf::RenderWindow& window)
-{
-	for (auto edge : vecEdges)
-	{
-		sf::VertexArray lines(sf::LinesStrip, 2);
+        res.push_back(topLeft);
+        res.push_back(topRight);
+        res.push_back(botRight);
+        res.push_back(botLeft);
+    }
 
-		lines[0].position = edge->start;
-		lines[0].color = sf::Color::Red;
-
-		lines[1].position = edge->end;
-		lines[1].color = sf::Color::Red;
-
-		window.draw(lines);
-	}
-}
-
-void DisplayEdge(Edge edge)
-{
-	std::cout << edge.start.x << " " << edge.start.y << " " << edge.end.x << " " << edge.end.y << std::endl;
-}
-
-void ShadowLight::DrawTriangles(sf::RenderWindow& window, const sf::View& view)
-{
-	castTexture.setView(view);
-	window.draw(sf::Sprite(castTexture.getTexture()), &shadowShader);
-}
-
-void ShadowLight::ConvertTileMapToPolyMap()
-{
-	sf::Vector2f startCoord = { 0, 0 };
-	vecEdges.clear();
-
-	std::vector<Tile*> tiles = m_map->GetVectorTiles();
-
-	for (int iter = 0; iter < tiles.size(); iter++)
-	{
-		if (!tiles[iter])
-		{
-			continue;
-		}
-		if (tiles[iter]->typeTile == TypeTile::Wall)
-		{
-			continue;
-		}
-
-		int numberOfTile = tiles[iter]->number;
-
-		int yCoord = std::floor(numberOfTile / HEIGHT_MAP);
-		int xCoord = numberOfTile - HEIGHT_MAP * yCoord;
-
-		int indexNorth = iter - WIDTH_MAP / 2;
-		int indexWest = iter - 1;
-
-		if (!tiles[iter]->neighboursExist[WEST])
-		{
-			if (indexNorth < 0)
-			{
-				continue;
-			}
-			if (tiles[indexNorth]->edgeExist[WEST])
-			{
-				vecEdges[tiles[indexNorth]->edgeId[WEST]]->end.y += HEIGHT_TILE;
-				tiles[iter]->edgeId[WEST] = tiles[indexNorth]->edgeId[WEST];
-				tiles[iter]->edgeExist[WEST] = true;
-			}
-			else
-			{
-				Edge* edge = new Edge();
-				edge->start.x = (startCoord.x + xCoord) * WIDTH_TILE;
-				edge->start.y = (startCoord.y + yCoord) * HEIGHT_TILE;
-
-				edge->end.x = edge->start.x;
-				edge->end.y = edge->start.y + HEIGHT_TILE;
-
-				int edgeId = vecEdges.size();
-				vecEdges.push_back(edge);
-
-				tiles[iter]->edgeId[WEST] = edgeId;
-				tiles[iter]->edgeExist[WEST] = true;
-			}
-		}
-
-		if (!tiles[iter]->neighboursExist[EAST])
-		{
-			if (indexNorth < 0)
-			{
-				continue;
-			}
-			if (tiles[indexNorth]->edgeExist[EAST])
-			{
-				vecEdges[tiles[indexNorth]->edgeId[EAST]]->end.y += HEIGHT_TILE;
-				tiles[iter]->edgeId[EAST] = tiles[indexNorth]->edgeId[EAST];
-				tiles[iter]->edgeExist[EAST] = true;
-			}
-			else
-			{
-				Edge* edge = new Edge();
-				edge->start.x = (startCoord.x + xCoord + 1) * WIDTH_TILE;
-				edge->start.y = (startCoord.y + yCoord) * HEIGHT_TILE;
-
-				edge->end.x = edge->start.x;
-				edge->end.y = edge->start.y + HEIGHT_TILE;
-
-				int edgeId = vecEdges.size();
-				vecEdges.push_back(edge);
-
-				tiles[iter]->edgeId[EAST] = edgeId;
-				tiles[iter]->edgeExist[EAST] = true;
-			}
-		}
-
-		if (!tiles[iter]->neighboursExist[NORTH])
-		{
-			if (indexWest < 0)
-			{
-				continue;
-			}
-			if (tiles[indexWest]->edgeExist[NORTH])
-			{
-				vecEdges[tiles[indexWest]->edgeId[NORTH]]->end.x += WIDTH_TILE;
-				tiles[iter]->edgeId[NORTH] = tiles[indexWest]->edgeId[NORTH];
-				tiles[iter]->edgeExist[NORTH] = true;
-			}
-			else
-			{
-				Edge* edge = new Edge();
-				edge->start.x = (startCoord.x + xCoord) * WIDTH_TILE;
-				edge->start.y = (startCoord.y + yCoord) * HEIGHT_TILE;
-
-				edge->end.x = edge->start.x + WIDTH_TILE;
-				edge->end.y = edge->start.y;
-
-				int edgeId = vecEdges.size();
-				vecEdges.push_back(edge);
-
-				tiles[iter]->edgeId[NORTH] = edgeId;
-				tiles[iter]->edgeExist[NORTH] = true;
-			}
-		}
-
-		if (!tiles[iter]->neighboursExist[SOUTH])
-		{
-			if (indexWest < 0)
-			{
-				continue;
-			}
-			if (tiles[indexWest]->edgeExist[SOUTH])
-			{
-				vecEdges[tiles[indexWest]->edgeId[SOUTH]]->end.x += WIDTH_TILE;
-				tiles[iter]->edgeId[SOUTH] = tiles[indexWest]->edgeId[SOUTH];
-				tiles[iter]->edgeExist[SOUTH] = true;
-			}
-			else
-			{
-				Edge* edge = new Edge();
-				edge->start.x = (startCoord.x + xCoord) * WIDTH_TILE;
-				edge->start.y = (startCoord.y + yCoord + 1) * HEIGHT_TILE;
-
-				edge->end.x = edge->start.x + WIDTH_TILE;
-				edge->end.y = edge->start.y;
-
-				int edgeId = vecEdges.size();
-				vecEdges.push_back(edge);
-
-				tiles[iter]->edgeId[SOUTH] = edgeId;
-				tiles[iter]->edgeExist[SOUTH] = true;
-			}
-		}
-	}
-}
-
-float ShadowLight::toDegrees(float radians)
-{
-	return float(double(radians) * 180.0 / M_PI);
-}
-
-float ShadowLight::toRadians(float degrees)
-{
-	return float(degrees * M_PI / 180);
-}
-
-void ShadowLight::CalculateVisibilityPolygon(sf::Vector2f start, float radius)
-{
-	vecVisibilityPolygonPoints.clear();
-	SetVecRays(start);
-	for (auto& edge : vecEdges)
-	{
-		for (int iter = 0; iter < 2; iter++)
-		{
-			sf::Vector2f rd;
-
-			rd.x = (iter == 0 ? edge->start.x : edge->end.x) - start.x;
-			rd.y = (iter == 0 ? edge->start.y : edge->end.y) - start.y;
-
-			float base_ang = toDegrees(atan2f(rd.y, rd.x));
-
-			base_ang -= 90;
-
-			float angular = 0;
-
-			for (int iter2 = 0; iter2 < 3; iter2++)
-			{
-				if (iter2 == 0)
-				{
-					angular = base_ang - 0.0001f;
-				}
-				if (iter2 == 1)
-				{
-					angular = base_ang;
-				}
-				if (iter2 == 2)
-				{
-					angular = base_ang + 0.0001f;
-				}
-
-				rd.x = radius * std::cosf(toRadians(angular));
-				rd.y = radius * std::sinf(toRadians(angular));
-
-				float minT1 = INFINITY;
-				sf::Vector2f minPoint = { 0, 0 };
-				float minAngle = 0;
-
-				bool isValidTriangle = false;
-
-				for (auto& edge2 : vecEdges)
-				{
-					sf::Vector2f vectorEdge = { edge2->end.x - edge2->start.x, edge2->end.y - edge2->start.y };
-
-					if (std::abs(vectorEdge.x - rd.x) > 0.0f && std::abs(vectorEdge.y - rd.y) > 0.0f)
-					{
-						float paramT2 = (rd.x * (edge2->start.y - start.y) + (rd.y * (start.x - edge2->start.x))) / (vectorEdge.x * rd.y - vectorEdge.y * rd.x);
-						float paramT1 = (edge2->start.x + vectorEdge.x * paramT2 - start.x) / rd.x;
-
-						if (paramT1 > 0 && paramT2 >= 0 && paramT2 <= 1.0f)
-						{
-							if (paramT1 < minT1)
-							{
-								minT1 = paramT1;
-								minPoint.x = start.x + rd.x * paramT1;
-								minPoint.y = start.y + rd.y * paramT1;
-								minAngle = toDegrees(atan2f(minPoint.y - start.y, minPoint.x - start.x));
-
-								isValidTriangle = true;
-							}
-						}
-					}
-				}
-
-				if (isValidTriangle)
-				{
-					std::tuple<float, float, float> line = { minAngle, minPoint.x, minPoint.y };
-					vecVisibilityPolygonPoints.push_back(line);
-				}
-			}
-		}
-	}
-
-	std::sort(vecVisibilityPolygonPoints.begin(), vecVisibilityPolygonPoints.end(),
-		[&](const std::tuple<float, float, float>& point1, const std::tuple<float, float, float>& point2)
-		{
-			return std::get<0>(point1) < std::get<0>(point2);
-		});
-
-	vecVisibilityPolygonPoints.erase(std::unique(vecVisibilityPolygonPoints.begin(), vecVisibilityPolygonPoints.end()),
-		vecVisibilityPolygonPoints.end());
+    return res;
 }

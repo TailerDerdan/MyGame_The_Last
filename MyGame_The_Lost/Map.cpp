@@ -2,14 +2,28 @@
 
 Map::Map(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, const sf::View& view, sf::RenderTexture& castTexture, sf::Texture& textureOfCaveOuter)
 {
-	castTexture.create(WIDTH_WINDOW, HEIGHT_WINDOW);
-
 	mapOfTexture.resize(WIDTH_MAP * HEIGHT_MAP + 1);
+
+	mapOfTileOfLight = std::vector<bool>(WIDTH_MAP * HEIGHT_MAP, false);
+	mapOfTileInBool = std::vector<bool>(WIDTH_MAP * HEIGHT_MAP, false);
+
 	textureOfCave = textureOfCaveOuter;
 
 	GenerateMap(4);
 	CreateTileForMap();
 	UpdateMap(WIDTH_WINDOW, HEIGHT_WINDOW, view, castTexture);
+
+	for (int iterX = 0; iterX < WIDTH_MAP; iterX++)
+	{
+		for (int iterY = 0; iterY < HEIGHT_MAP; iterY++)
+		{
+			int numberOfTile = iterX * HEIGHT_MAP + iterY;
+			if (generatedMap[iterX][iterY] == TypeTile::Stone)
+			{
+				mapOfTileInBool[numberOfTile] = true;
+			}
+		}
+	}
 
 	previousCoordView = sf::Vector2f{ view.getCenter().x - view.getSize().x / 2, view.getCenter().y - view.getSize().y / 2 };
 }
@@ -118,91 +132,11 @@ void Map::CreateTileForMap()
 	}
 }
 
-//TODO: оптимизировать с помощью структур данных
-void Map::SetNeighborOfTile(int iterX, int iterY, int iterForVector, int numberOfTile)
-{
-	if (iterX - 1 > 0)
-	{
-		if (generatedMap[iterX - 1][iterY] == TypeTile::Stone)
-		{
-			mapOfTexture[iterForVector]->neighboursExist[NORTH] = true;
-			mapOfTexture[iterForVector]->edgeExist[NORTH] = false;
-		}
-		else
-		{
-			mapOfTexture[iterForVector]->neighboursExist[NORTH] = false;
-			mapOfTexture[iterForVector]->edgeExist[NORTH] = false;
-		}
-	}
-	else
-	{
-		mapOfTexture[iterForVector]->neighboursExist[NORTH] = true;
-		mapOfTexture[iterForVector]->edgeExist[NORTH] = false;
-	}
-
-	if (iterY - 1 > 0)
-	{
-		if (generatedMap[iterX][iterY - 1] == TypeTile::Stone)
-		{
-			mapOfTexture[iterForVector]->neighboursExist[WEST] = true;
-			mapOfTexture[iterForVector]->edgeExist[WEST] = false;
-		}
-		else
-		{
-			mapOfTexture[iterForVector]->neighboursExist[WEST] = false;
-			mapOfTexture[iterForVector]->edgeExist[WEST] = false;
-		}
-	}
-	else
-	{
-		mapOfTexture[iterForVector]->neighboursExist[WEST] = true;
-		mapOfTexture[iterForVector]->edgeExist[WEST] = false;
-	}
-
-	if (iterX + 1 < WIDTH_MAP)
-	{
-		if (generatedMap[iterX + 1][iterY] == TypeTile::Stone)
-		{
-			mapOfTexture[iterForVector]->neighboursExist[SOUTH] = true;
-			mapOfTexture[iterForVector]->edgeExist[SOUTH] = false;
-		}
-		else
-		{
-			mapOfTexture[iterForVector]->neighboursExist[SOUTH] = false;
-			mapOfTexture[iterForVector]->edgeExist[SOUTH] = false;
-		}
-	}
-	else
-	{
-		mapOfTexture[iterForVector]->neighboursExist[SOUTH] = true;
-		mapOfTexture[iterForVector]->edgeExist[SOUTH] = false;
-	}
-
-	if (iterY + 1 < HEIGHT_MAP)
-	{
-		if (generatedMap[iterX][iterY + 1] == TypeTile::Stone)
-		{
-			mapOfTexture[iterForVector]->neighboursExist[EAST] = true;
-			mapOfTexture[iterForVector]->edgeExist[EAST] = false;
-		}
-		else
-		{
-			mapOfTexture[iterForVector]->neighboursExist[EAST] = false;
-			mapOfTexture[iterForVector]->edgeExist[EAST] = false;
-		}
-	}
-	else
-	{
-		mapOfTexture[iterForVector]->neighboursExist[EAST] = true;
-		mapOfTexture[iterForVector]->edgeExist[EAST] = false;
-	}
-}
-
 //TODO: декомпозировать функцию, так чтобы строк было небольше 20 и небольше 2 вложенностей
 void Map::UpdateMap(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, const sf::View& view, sf::RenderTexture& castTexture)
 {
 	sf::Vector2f viewPosition = sf::Vector2f{ view.getCenter().x - view.getSize().x / 2, view.getCenter().y - view.getSize().y / 2 };
-	if (!isMapRenderFirstTime)
+	/*if (!isMapRenderFirstTime)
 	{
 		isMapRenderFirstTime = true;
 	}
@@ -212,12 +146,10 @@ void Map::UpdateMap(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, const sf::V
 		{
 			return;
 		}
-	}
+	}*/
 
 	previousCoordView = viewPosition;
-	castTexture.clear();
-	castTexture.setView(view);
-	
+
 	int iterForVector = 0;
 
 	for (int iterX = 0; iterX < WIDTH_MAP; iterX++)
@@ -227,8 +159,6 @@ void Map::UpdateMap(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, const sf::V
 			int numberOfTile = iterX * HEIGHT_MAP + iterY;
 			int yCoord = iterX;
 			int xCoord = iterY;
-
-			SetNeighborOfTile(iterX, iterY, iterForVector, numberOfTile);
 
 			if ((xCoord * WIDTH_TILE >= viewPosition.x && xCoord * WIDTH_TILE <= WIDTH_WINDOW + viewPosition.x) &&
 				(yCoord * HEIGHT_TILE >= viewPosition.y && yCoord * HEIGHT_TILE <= HEIGHT_WINDOW + viewPosition.y))
@@ -257,12 +187,122 @@ void Map::UpdateMap(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, const sf::V
 					mapOfTexture[iterForVector]->sprite.setPosition({ float(xCoord * WIDTH_TILE), float(yCoord * HEIGHT_TILE) });
 				}
 				castTexture.draw(mapOfTexture[iterForVector]->sprite);
-				castTexture.display();
 				iterForVector++;
 			}
 		}
 	}
 }
+
+void Map::FillFromCell(sf::Vector2f& coord, int& radius)
+{
+	if (!mapOfTileInBool[coord.y * HEIGHT_MAP + coord.x])
+	{
+		mapOfTileOfLight[coord.y * HEIGHT_MAP + coord.x] = 1;
+	}
+	int newRadius = radius - 1;
+	if (newRadius < 0)
+	{
+		return;
+	}
+	if (!mapOfTileInBool[coord.y * HEIGHT_MAP + coord.x + 1])
+	{
+		sf::Vector2f newCoord = { coord.x + 1, coord.y };
+		FillFromCell(newCoord, newRadius);
+	}
+	if (!mapOfTileInBool[coord.y * HEIGHT_MAP + coord.x - 1])
+	{
+		sf::Vector2f newCoord = { coord.x - 1, coord.y };
+		FillFromCell(newCoord, newRadius);
+	}
+	if (!mapOfTileInBool[(coord.y - 1) * HEIGHT_MAP + coord.x])
+	{
+		sf::Vector2f newCoord = { coord.x, coord.y - 1 };
+		FillFromCell(newCoord, newRadius);
+	}
+	if (!mapOfTileInBool[(coord.y + 1) * HEIGHT_MAP + coord.x])
+	{
+		sf::Vector2f newCoord = { coord.x, coord.y + 1 };
+		FillFromCell(newCoord, newRadius);
+	}
+}
+
+//void Map::FillFromCell(sf::Vector2f& coord, int& radius)
+//{
+//	using TileForLight = std::pair<sf::Vector2f, int >;
+//
+//	std::queue<TileForLight> unvistedVertex;
+//	std::vector<TileForLight> visitedVertex;
+//
+//	TileForLight tile = { coord , radius };
+//
+//	unvistedVertex.push(tile);
+//
+//	while (!unvistedVertex.empty())
+//	{
+//		auto coordOfTile = unvistedVertex.back();
+//		unvistedVertex.pop();
+//
+//		mapOfTileOfLight[coordOfTile.first.y * HEIGHT_MAP + coordOfTile.first.x] = 1;
+//
+//		visitedVertex.push_back(coordOfTile);
+//
+//		if (!mapOfTileInBool[coordOfTile.first.y * HEIGHT_MAP + coordOfTile.first.x + 1])
+//		{
+//			sf::Vector2f newCoord = { coordOfTile.first.x + 1, coordOfTile.first.y };
+//			int newRadius = coordOfTile.second - 1;
+//
+//			TileForLight newTile = { newCoord , newRadius };
+//			auto iter = std::find(visitedVertex.begin(), visitedVertex.end(), newTile);
+//			if (iter == visitedVertex.end() && newRadius >= 0)
+//			{
+//				unvistedVertex.push(newTile);
+//
+//				mapOfTileOfLight[newCoord.y * HEIGHT_MAP + newCoord.x] = 1;
+//			}
+//
+//		}
+//		if (!mapOfTileInBool[coordOfTile.first.y * HEIGHT_MAP + coordOfTile.first.x - 1])
+//		{
+//			sf::Vector2f newCoord = { coordOfTile.first.x - 1, coordOfTile.first.y };
+//			int newRadius = coordOfTile.second - 1;
+//
+//			TileForLight newTile = { newCoord , newRadius };
+//			auto iter = std::find(visitedVertex.begin(), visitedVertex.end(), newTile);
+//			if (iter == visitedVertex.end() && newRadius >= 0)
+//			{
+//				unvistedVertex.push(newTile);
+//				mapOfTileOfLight[newCoord.y * HEIGHT_MAP + newCoord.x] = 1;
+//			}
+//
+//		}
+//		if (!mapOfTileInBool[(coordOfTile.first.y - 1) * HEIGHT_MAP + coordOfTile.first.x])
+//		{
+//			sf::Vector2f newCoord = { coordOfTile.first.x, coordOfTile.first.y - 1 };
+//			int newRadius = coordOfTile.second - 1;
+//
+//			TileForLight newTile = { newCoord , newRadius };
+//			auto iter = std::find(visitedVertex.begin(), visitedVertex.end(), newTile);
+//			if (iter == visitedVertex.end() && newRadius >= 0)
+//			{
+//				unvistedVertex.push(newTile);
+//				mapOfTileOfLight[newCoord.y * HEIGHT_MAP + newCoord.x] = 1;
+//			}
+//		}
+//		if (!mapOfTileInBool[(coordOfTile.first.y + 1) * HEIGHT_MAP + coordOfTile.first.x])
+//		{
+//			sf::Vector2f newCoord = { coordOfTile.first.x, coordOfTile.first.y + 1 };
+//			int newRadius = coordOfTile.second - 1;
+//
+//			TileForLight newTile = { newCoord , newRadius };
+//			auto iter = std::find(visitedVertex.begin(), visitedVertex.end(), newTile);
+//			if (iter == visitedVertex.end() && newRadius >= 0)
+//			{
+//				unvistedVertex.push(newTile);
+//				mapOfTileOfLight[newCoord.y * HEIGHT_MAP + newCoord.x] = 1;
+//			}
+//		}
+//	}
+//}
 
 void Map::DrawMap(sf::RenderWindow& window, sf::RenderTexture& castTexture)
 {
@@ -300,4 +340,9 @@ std::vector<Tile*> Map::GetVectorTiles()
 std::array<std::array<int, HEIGHT_MAP>, WIDTH_MAP> Map::GetMapInEnum()
 {
 	return generatedMap;
+}
+
+std::vector<bool> Map::GetMapOfLightInBool()
+{
+	return mapOfTileOfLight;
 }

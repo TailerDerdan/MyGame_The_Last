@@ -11,12 +11,16 @@ class Camera
 {
 public:
 	sf::RenderWindow m_window;
+
 	sf::RenderTexture castTexture;
+	sf::RenderTexture renderTextureForLight;
 
 	Camera();
 
 	void Update(sf::Vector2f& mouseCoords, bool& isMouseMove);
 	sf::Vector2f GetViewPosition();
+
+	void DrawRenderTexture(sf::RenderWindow& window, const sf::Shader& shadowShader);
 
 	void SetPlayer(Player* player);
 	sf::View GetView();

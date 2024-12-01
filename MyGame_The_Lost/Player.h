@@ -32,8 +32,7 @@ public:
 
 	Player(Map* map);
 
-	void Draw(sf::RenderWindow& window);
-	void Update();
+	void Update(sf::RenderTexture& castTexture, const sf::View& view);
 
 	void UpdateMovement(PlayerMovement movement);
 	void DisplayMovement();

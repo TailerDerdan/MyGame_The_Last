@@ -3,46 +3,47 @@
 #include "Tile.h"
 #include "Map.h"
 
-struct Edge
+struct GreedyQuad
 {
-	sf::Vector2f start;
-	sf::Vector2f end;
+	float x, y, w, h;
 };
 
 class ShadowLight
 {
 public:
-	sf::Shader shadowShader;
+	std::vector<uint32_t> MakeCircle(const std::vector<bool>& mapOfTileInBool);
 
-	ShadowLight(Map* map, sf::Vector2f mouseCoords, const int WINDOW_WIDTH, const int WINDOW_HEIGHT);
+	std::vector<GreedyQuad> GreedyMeshBinaryPlane(std::vector<uint32_t>& data, int size);
 
-	void UpdateMouseCoords(sf::Vector2f& newCoord);
-	void Update(const sf::Vector2f& mouseCoords, const bool& isMouseMove, sf::RenderWindow& window);
+	std::vector<sf::Vertex> CreateFromGreed(const std::vector<GreedyQuad>& quads);
 
-	void DrawLines(sf::RenderWindow& window);
-
-	void DrawTriangles(sf::RenderWindow& window, const sf::View& view);
-
-	void SetVecRays(sf::Vector2f mouseCoords);
-	void SetViewForRenderTexture(const sf::View& view);
+	ShadowLight();
+	~ShadowLight();
 
 private:
-	float toDegrees(float radians);
-	float toRadians(float degrees);
+    template<typename T>
+    int CountTrailingZeros(T n)
+    {
+        static_assert(std::is_integral<T>::value, "Тип должен быть целочисленным");
 
-	void ConvertTileMapToPolyMap();
-	void CalculateVisibilityPolygon(sf::Vector2f start, float radius);
+        if (n == 0)
+        {
+            return sizeof(T) * 8;
+        }
 
-private:
-	sf::RenderTexture castTexture;
-	std::vector<sf::Vertex> vertices;
+        int count = 0;
+        while ((n & 1) == 0)
+        {
+            n >>= 1;
+            count++;
+        }
 
-	sf::Vector2f m_mouseCoord;
+        return count;
+    }
 
-	Map* m_map = nullptr;
-
-	std::vector<Edge*> vecEdges;
-	std::vector<std::tuple<float, float, float>> vecVisibilityPolygonPoints;
-
-	std::vector<Edge*> vecRays;
+    template<typename T>
+    int CountTrailingOnes(T n)
+    {
+        return CountTrailingZeros(~n);
+    }
 };

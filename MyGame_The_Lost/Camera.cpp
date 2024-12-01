@@ -9,7 +9,12 @@ Camera::Camera()
 	m_view.reset(sf::FloatRect({ 0.f, 0.f }, { WINDOW_WIDTH, WINDOW_HEIGHT }));
 	m_window.setView(m_view);
 
+	renderTextureForLight.create(WINDOW_WIDTH, WINDOW_HEIGHT);
+	castTexture.create(WINDOW_WIDTH, WINDOW_HEIGHT);
+
 	m_player = nullptr;
+
+	castTexture.setSmooth(true);
 
 	viewPosition = m_view.getCenter() - m_view.getSize() / 2.0f;
 }
@@ -33,7 +38,7 @@ void Camera::KeyCameraHandler()
 		m_view.move(SPEED_CAMERA, 0);
 	}
 
-	m_window.setView(m_view);
+	//m_window.setView(m_view);
 	viewPosition = m_view.getCenter() - m_view.getSize() / 2.0f;
 }
 
@@ -102,11 +107,23 @@ sf::Vector2f Camera::GetViewPosition()
 
 void Camera::Update(sf::Vector2f& mouseCoords, bool& isMouseMove)
 {
+	castTexture.setView(m_view);
+	castTexture.clear();
+
+	renderTextureForLight.setView(m_view);
+	renderTextureForLight.clear();
+
 	sf::Event event;
 	while (m_window.pollEvent(event))
 	{
 		EventHandler(event, mouseCoords, isMouseMove);
 	}
+}
+
+void Camera::DrawRenderTexture(sf::RenderWindow& window, const sf::Shader& shadowShader)
+{
+	window.draw(sf::Sprite(castTexture.getTexture()));
+	window.draw(sf::Sprite(renderTextureForLight.getTexture()), &shadowShader);
 }
 
 void Camera::SetPlayer(Player* player)

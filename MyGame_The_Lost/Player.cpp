@@ -204,7 +204,7 @@ void Player::PlayerMoveToBottomSide()
 void Player::PlayerMoveToTopSide()
 {
 	sf::Vector2f positionPlayer = player.getPosition();
-	sf::Vector2f endPoint = { positionPlayer.x, -1 };
+	sf::Vector2f endPoint = { positionPlayer.x, 0 };
 
 	sf::Vector2f motion = { endPoint.x - positionPlayer.x, endPoint.y - positionPlayer.y };
 	float moduleMotion = GetModuleVector(motion);
@@ -215,7 +215,7 @@ void Player::PlayerMoveToTopSide()
 
 	sf::Vector2f newDirection = { direction.x * movementOffset, direction.y * movementOffset };
 
-	if (std::abs(endPoint.y - positionPlayer.y) <= 1 || !CanPlayerPass(positionPlayer + newDirection, SideForChechiking::Top))
+	if (std::abs(endPoint.y - positionPlayer.y) <= 5 || !CanPlayerPass(positionPlayer + newDirection, SideForChechiking::Top))
 	{
 		return;
 	}
@@ -223,8 +223,10 @@ void Player::PlayerMoveToTopSide()
 	player.setPosition(positionPlayer + newDirection);
 }
 
-void Player::Update()
+void Player::Update(sf::RenderTexture& castTexture, const sf::View& view)
 {
+	//castTexture.clear();
+
 	PlayerMoveToBottomSide();
 	if (m_movement.isRight)
 	{
@@ -238,9 +240,5 @@ void Player::Update()
 	{
 		PlayerMoveToTopSide();
 	}
-}
-
-void Player::Draw(sf::RenderWindow& window)
-{
-	window.draw(player);
+	castTexture.draw(player);
 }
