@@ -22,7 +22,7 @@ struct Light
     sf::VertexArray blocks;
 };
 
-void MakeLight(Light& light, Map* map, sf::Vector2f playerCoord)
+void MakeLight(Light& light, Map* map, sf::Vector2f playerCoord, bool& isFirstTimeOfSpreadLight)
 {
     light.vec.clear();
     light.res.clear();
@@ -34,7 +34,8 @@ void MakeLight(Light& light, Map* map, sf::Vector2f playerCoord)
     
     sf::Vector2f tilePlayerCoord = { floor(playerCoord.x / 25), floor(playerCoord.y / 25) };
 
-    map->FillFromCell(tilePlayerCoord, radius);
+    map->SpreadTheLight(tilePlayerCoord, radius, isFirstTimeOfSpreadLight);
+    isFirstTimeOfSpreadLight = false;
 
     light.vec = light.light.MakeCircle(map->GetMapOfLightInBool());
     light.res = light.light.GreedyMeshBinaryPlane(light.vec, 32);
@@ -72,6 +73,8 @@ int main()
     
     camera.SetPlayer(player);
 
+    bool isFirstTimeOfSpreadLight = true;
+
     while (camera.m_window.isOpen())
     {
         camera.Update(mouseCoords, isMouseMove);
@@ -80,7 +83,7 @@ int main()
 
         player->Update(camera.castTexture, camera.GetView());
 
-        MakeLight(light, map, player->GetPosition());
+        MakeLight(light, map, player->GetPosition(), isFirstTimeOfSpreadLight);
 
         camera.renderTextureForLight.draw(light.blocks);
 

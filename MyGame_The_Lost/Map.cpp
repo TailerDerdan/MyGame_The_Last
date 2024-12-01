@@ -24,8 +24,6 @@ Map::Map(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, const sf::View& view, 
 			}
 		}
 	}
-
-	previousCoordView = sf::Vector2f{ view.getCenter().x - view.getSize().x / 2, view.getCenter().y - view.getSize().y / 2 };
 }
 
 int Map::GetCountOfNeighbor(sf::Vector2i coordOfTile)
@@ -136,19 +134,6 @@ void Map::CreateTileForMap()
 void Map::UpdateMap(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, const sf::View& view, sf::RenderTexture& castTexture)
 {
 	sf::Vector2f viewPosition = sf::Vector2f{ view.getCenter().x - view.getSize().x / 2, view.getCenter().y - view.getSize().y / 2 };
-	/*if (!isMapRenderFirstTime)
-	{
-		isMapRenderFirstTime = true;
-	}
-	else
-	{
-		if (previousCoordView == viewPosition)
-		{
-			return;
-		}
-	}*/
-
-	previousCoordView = viewPosition;
 
 	int iterForVector = 0;
 
@@ -224,6 +209,29 @@ void Map::FillFromCell(sf::Vector2f& coord, int& radius)
 		sf::Vector2f newCoord = { coord.x, coord.y + 1 };
 		FillFromCell(newCoord, newRadius);
 	}
+}
+
+void Map::SpreadTheLight(sf::Vector2f& coord, int& radius, bool isFirstTimeOfSpreadLight)
+{
+	if (!isFirstTimeOfSpreadLight)
+	{
+		for (int iterY = previousCoordOfSpreadLight.y - previousRadiusOfSpreadLight - 1; iterY < previousCoordOfSpreadLight.y + previousRadiusOfSpreadLight + 1; iterY++)
+		{
+			for (int iterX = previousCoordOfSpreadLight.x - previousRadiusOfSpreadLight - 1; iterX < previousCoordOfSpreadLight.x + previousRadiusOfSpreadLight + 1; iterX++)
+			{
+				if (iterY < 0 || iterX < 0)
+				{
+					continue;
+				}
+				mapOfTileOfLight[iterY * HEIGHT_MAP + iterX] = 0;
+			}
+		}
+	}
+
+	previousCoordOfSpreadLight = coord;
+	previousRadiusOfSpreadLight = radius;
+
+	FillFromCell(coord, radius);
 }
 
 //void Map::FillFromCell(sf::Vector2f& coord, int& radius)

@@ -5,8 +5,8 @@ out vec4 FragColor;
 in vec2 i_tex;
 
 uniform sampler2D texture;
-uniform vec2 mousePosition; // ѕозици€ курсора мыши, переданна€ из приложени€
-uniform vec2 resolution; // –азрешение окна, переданное из приложени€
+uniform vec2 mousePosition;
+uniform vec2 resolution;
 
 void main() {
 	vec2 uv	   = gl_FragCoord.xy / resolution;
@@ -20,7 +20,7 @@ void main() {
 
 	if (pixel.rgb == vec3(1.0))
 	{
-		FragColor = vec4(vec3(1.0), 0.0);
+		FragColor = vec4(1.000, 0.710, 0.000, circle * 0.3);
 	}
 	else
 	{

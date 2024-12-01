@@ -13,7 +13,7 @@ public:
 	void DrawMap(sf::RenderWindow& window, sf::RenderTexture& castTexture);
 	void UpdateMap(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, const sf::View& view, sf::RenderTexture& castTexture);
 
-	void FillFromCell(sf::Vector2f& coord, int& radius);
+	void SpreadTheLight(sf::Vector2f& coord, int& radius, bool isFirstTimeOfSpreadLight);
 
 	TypeTile GetTypeOfTile(int numberOfTile);
 	void ChangeColorOfTile(int numberOfTile);
@@ -23,6 +23,8 @@ public:
 	std::vector<bool> GetMapOfLightInBool();
 
 private:
+	void FillFromCell(sf::Vector2f& coord, int& radius);
+
 	void CreateTileForMap();
 
 	int GetCountOfNeighbor(sf::Vector2i coordOfTile);
@@ -32,9 +34,11 @@ private:
 	void GenerateMap(int countOfIteration);
 
 private:
-	bool isMapRenderFirstTime = false;
 
-	sf::Vector2f previousCoordView;
+	sf::Vector2f previousCoordOfSpreadLight;
+	int previousRadiusOfSpreadLight = 0;
+
+	bool isMapRenderFirstTime = false;
 
 	sf::Texture textureOfCave;
 
