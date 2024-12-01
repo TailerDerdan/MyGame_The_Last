@@ -17,6 +17,7 @@ public:
 	void ChangeColorOfTile(int numberOfTile);
 
 	std::vector<Tile*> GetVectorTiles();
+	std::array<std::array<int, HEIGHT_MAP>, WIDTH_MAP> GetMapInEnum();
 
 private:
 	void CreateTileForMap();

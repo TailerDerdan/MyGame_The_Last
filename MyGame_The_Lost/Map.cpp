@@ -296,3 +296,8 @@ std::vector<Tile*> Map::GetVectorTiles()
 {
 	return mapOfTexture;
 }
+
+std::array<std::array<int, HEIGHT_MAP>, WIDTH_MAP> Map::GetMapInEnum()
+{
+	return generatedMap;
+}

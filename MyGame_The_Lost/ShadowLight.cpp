@@ -1,7 +1,18 @@
 #include "ShadowLight.h"
 
+//GLuint createUBO(const std::vector<GLubyte>& data) {
+//	GLuint ubo;
+//	glGenBuffers(1, &ubo); // Создание UBO
+//	glBindBuffer(GL_UNIFORM_BUFFER, ubo);
+//	glBufferData(GL_UNIFORM_BUFFER, data.size() * sizeof(GLubyte), data.data(), GL_STATIC_DRAW);
+//	glBindBuffer(GL_UNIFORM_BUFFER, 0); // Отвязываем буфер
+//	return ubo;
+//}
+
 ShadowLight::ShadowLight(Map* map, sf::Vector2f mouseCoords, const int WINDOW_WIDTH, const int WINDOW_HEIGHT)
 {
+	shadowShader.loadFromFile("shadow.vert", "shadow.frag");
+
 	m_map = map;
 
 	vecRays.resize(4);
@@ -12,8 +23,35 @@ ShadowLight::ShadowLight(Map* map, sf::Vector2f mouseCoords, const int WINDOW_WI
 
 	vertices.reserve(500);
 
-	shadowShader.loadFromFile("shadow.vert", "shadow.frag");
-	shadowShader.setUniform("u_resolution", sf::Vector2f(WINDOW_WIDTH, WINDOW_HEIGHT));
+	//std::vector<GLubyte> mapOfWall(30800);
+
+	//std::array<std::array<int, HEIGHT_MAP>, WIDTH_MAP> mapOfEnum = map->GetMapInEnum();
+
+	//for (size_t iterX = 0; iterX < WIDTH_MAP; iterX++)
+	//{
+	//	for (size_t iterY = 0; iterY < HEIGHT_MAP; iterY++)
+	//	{
+	//		if (mapOfEnum[iterX][iterY] == 1)	
+	//		{
+	//			int numberOfTile = iterX * HEIGHT_MAP + iterY;
+	//			mapOfWall[numberOfTile] = true;
+	//		}
+	//	}
+	//}
+
+	//GLuint texture;
+	//glGenTextures(1, &texture);
+	//glBindTexture(GL_TEXTURE_1D, texture);
+
+	//// Загрузка данных в текстуру
+	//glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, 30800, 0, GL_RED, GL_FLOAT, mapOfWall);
+
+	//// Установка параметров фильтрации
+	//glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	//glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	//
+	//shadowShader.setUniform("u_resolution", sf::Vector2f(WINDOW_WIDTH, WINDOW_HEIGHT));
+	//shadowShader.setUniform("mapOfWall", mapOfWall);
 }
 
 void ShadowLight::SetVecRays(sf::Vector2f mouseCoord)
@@ -48,11 +86,11 @@ void ShadowLight::SetViewForRenderTexture(const sf::View& view)
 
 void ShadowLight::Update(const sf::Vector2f& mouseCoords, const bool& isMouseMove, sf::RenderWindow& window)
 {
-	m_mouseCoord = mouseCoords;
+	/*m_mouseCoord = mouseCoords;
 	shadowShader.setUniform("u_mouse", m_mouseCoord);
-	/*castTexture.clear();
+	castTexture.clear();
 	castTexture.display();*/
-	if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+	/*if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
 	{
 		if (isMouseMove)
 		{
@@ -90,7 +128,7 @@ void ShadowLight::Update(const sf::Vector2f& mouseCoords, const bool& isMouseMov
 		
 		castTexture.draw(vertices.data(), vertices.size(), sf::TriangleFan);
 		castTexture.display();
-	}
+	}*/
 }
 
 void ShadowLight::DrawLines(sf::RenderWindow& window)
