@@ -3,9 +3,9 @@
 ShadowLight::ShadowLight() {      }
 ShadowLight::~ShadowLight() {     }
 
-std::vector<uint32_t> ShadowLight::MakeCircle(const std::vector<bool>& mapOfLightInBool)
+std::vector<uint64_t> ShadowLight::MakeCircle(const std::vector<bool>& mapOfLightInBool)
 {
-    std::vector<uint32_t> matrix(200, 0);
+    std::vector<uint64_t> matrix(200, 0);
 
     for (int y = 0; y < 200; ++y)
     {
@@ -13,7 +13,7 @@ std::vector<uint32_t> ShadowLight::MakeCircle(const std::vector<bool>& mapOfLigh
         {
             if (mapOfLightInBool[x * 200 + y])
             {
-                matrix[y] |= (1 << x);
+                matrix[y] |= (uint64_t(1) << x);
             }
         }
     }
@@ -21,32 +21,32 @@ std::vector<uint32_t> ShadowLight::MakeCircle(const std::vector<bool>& mapOfLigh
     return matrix;
 }
 
-std::vector<GreedyQuad> ShadowLight::GreedyMeshBinaryPlane(std::vector<uint32_t>& data, int size)
+std::vector<GreedyQuad> ShadowLight::GreedyMeshBinaryPlane(std::vector<uint64_t>& data, int size)
 {
     std::vector<GreedyQuad> res;
 
     for (int row = 0; row < data.size(); row++)
     {
-        int y = 0;
-        uint32_t height = 0;
+        uint64_t y = 0;
+        uint64_t height = 0;
         while (y < size)
         {
-            y += CountTrailingZeros(data[row] >> (int)y);
+            y += CountTrailingZeros(data[row] >> (uint64_t)y);
 
             if (y >= size)
             {
                 break;
             }
 
-            int h = (int)CountTrailingOnes(data[row] >> (int)y);
-            uint32_t hAsMask;
-            hAsMask = (1u << (int)h) - 1;
+            uint64_t h = (uint64_t)CountTrailingOnes(data[row] >> (uint64_t)y);
+            uint64_t hAsMask;
+            hAsMask = (uint64_t(1ll) << (uint64_t)h) - 1;
 
-            uint32_t mask = hAsMask << (int)y;
-            int w = 1;
+            uint64_t mask = hAsMask << (uint64_t)y;
+            uint64_t w = 1;
             while (row + w < size)
             {
-                uint32_t nextRowH = (data[row + w] >> y) & hAsMask;
+                uint64_t nextRowH = (data[row + w] >> y) & hAsMask;
                 if (nextRowH != hAsMask)
                 {
                     height = nextRowH;

@@ -31,7 +31,7 @@ private:
 	void EventHandler(sf::Event& event, sf::Vector2f& mouseCoords, bool& isMouseMove);
 
 	void KeyCameraHandler();
-	void KeyPlayerHandler();
+	void PlayerHandler();
 
 private:
 	sf::View m_view;

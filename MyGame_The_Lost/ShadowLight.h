@@ -11,9 +11,9 @@ struct GreedyQuad
 class ShadowLight
 {
 public:
-	std::vector<uint32_t> MakeCircle(const std::vector<bool>& mapOfTileInBool);
+	std::vector<uint64_t> MakeCircle(const std::vector<bool>& mapOfTileInBool);
 
-	std::vector<GreedyQuad> GreedyMeshBinaryPlane(std::vector<uint32_t>& data, int size);
+	std::vector<GreedyQuad> GreedyMeshBinaryPlane(std::vector<uint64_t>& data, int size);
 
 	std::vector<sf::Vertex> CreateFromGreed(const std::vector<GreedyQuad>& quads);
 

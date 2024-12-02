@@ -38,13 +38,13 @@ void Camera::KeyCameraHandler()
 		m_view.move(SPEED_CAMERA, 0);
 	}
 
-	//m_window.setView(m_view);
 	viewPosition = m_view.getCenter() - m_view.getSize() / 2.0f;
 }
 
-void Camera::KeyPlayerHandler()
+void Camera::PlayerHandler()
 {
 	PlayerMovement playerMovement;
+	bool isPlayerDig = false;
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
 	{
 		playerMovement.isLeft = true;
@@ -57,7 +57,12 @@ void Camera::KeyPlayerHandler()
 	{
 		playerMovement.isTop = true;
 	}
+	if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+	{
+		isPlayerDig = true;
+	}
 	m_player->UpdateMovement(playerMovement);
+	m_player->UpdateDigging(isPlayerDig);
 }
 
 void Camera::OnMousePressed(const sf::Event::MouseButtonEvent& event, sf::Vector2f& mousePosition)
@@ -72,7 +77,7 @@ void Camera::OnMouseMoved(const sf::Event::MouseMoveEvent& event, sf::Vector2f& 
 
 void Camera::EventHandler(sf::Event& event, sf::Vector2f& mouseCoords, bool& isMouseMove)
 {
-	KeyPlayerHandler();
+	PlayerHandler();
 	KeyCameraHandler();
 
 	switch (event.type)
@@ -85,6 +90,7 @@ void Camera::EventHandler(sf::Event& event, sf::Vector2f& mouseCoords, bool& isM
 			break;
 		case sf::Event::MouseMoved:
 			OnMouseMoved(event.mouseMove, mouseCoords);
+			m_player->UpdateMouseCoord(mouseCoords);
 			isMouseMove = true;
 			break;
 		case sf::Event::MouseButtonReleased:

@@ -2,12 +2,142 @@
 
 Player::Player(Map* map)
 {
-	texture.loadFromFile("../assets/moving.png");
-	player.setTexture(texture);
+	textureMovingRight.loadFromFile("../assets/movingRight.png");
+	textureMovingLeft.loadFromFile("../assets/movingLeft.png");
+
+	player.setTexture(textureMovingRight);
 	player.setTextureRect({ 0, 0, PLAYER_WIDTH, PLAYER_HEIGHT });
 	player.setPosition({ 250, 50 });
 
+	framesForMovementLeft.resize(COUNT_SPRITE_MOVING);
+
+	SetIntRectsForMoving();
+	SetIntRectForDigging();
+
 	m_map = map;
+}
+
+void Player::SetIntRectsForMoving()
+{
+	int index = COUNT_SPRITE_MOVING - 1;
+
+	sf::IntRect intRect;
+	intRect.top = 0;
+	intRect.height = 35;
+
+	intRect.left = 0;
+	intRect.width = 19;
+	framesForMovementRight.push_back(intRect);
+
+	framesForMovementLeft[index] = intRect;
+	index--;
+
+	intRect.left = 42;
+	intRect.width = 20;
+	framesForMovementRight.push_back(intRect);
+
+	framesForMovementLeft[index] = intRect;
+	index--;
+
+	intRect.left = 88;
+	intRect.width = 21;
+	framesForMovementRight.push_back(intRect);
+
+	framesForMovementLeft[index] = intRect;
+	index--;
+
+	intRect.left = 134;
+	intRect.width = 21;
+	framesForMovementRight.push_back(intRect);
+
+	framesForMovementLeft[index] = intRect;
+	index--;
+
+	intRect.left = 180;
+	intRect.width = 20;
+	framesForMovementRight.push_back(intRect);
+
+	framesForMovementLeft[index] = intRect;
+	index--;
+
+	intRect.left = 228;
+	intRect.width = 19;
+	framesForMovementRight.push_back(intRect);
+
+	framesForMovementLeft[index] = intRect;
+	index--;
+
+	intRect.left = 277;
+	intRect.width = 18;
+	framesForMovementRight.push_back(intRect);
+
+	framesForMovementLeft[index] = intRect;
+	index--;
+
+	intRect.left = 320;
+	intRect.width = 19;
+	framesForMovementRight.push_back(intRect);
+
+	framesForMovementLeft[index] = intRect;
+	index--;
+
+	intRect.left = 364;
+	intRect.width = 21;
+	framesForMovementRight.push_back(intRect);
+
+	framesForMovementLeft[index] = intRect;
+	index--;
+
+	intRect.left = 409;
+	intRect.width = 22;
+	framesForMovementRight.push_back(intRect);
+
+	framesForMovementLeft[index] = intRect;
+	index--;
+
+	intRect.left = 456;
+	intRect.width = 21;
+	framesForMovementRight.push_back(intRect);
+
+	framesForMovementLeft[index] = intRect;
+	index--;
+
+	intRect.left = 506;
+	intRect.width = 18;
+	framesForMovementRight.push_back(intRect);
+
+	framesForMovementLeft[index] = intRect;
+}
+
+void Player::SetIntRectForDigging()
+{
+	sf::IntRect intRect;
+	intRect.top = 0;
+	intRect.height = 35;
+
+	intRect.left = 0;
+	intRect.width = 27;
+	framesForDigging.push_back(intRect);
+
+	intRect.left = 43;
+	intRect.width = 28;
+	framesForDigging.push_back(intRect);
+
+	intRect.left = 83;
+	intRect.width = 22;
+	framesForDigging.push_back(intRect);
+
+	intRect.left = 134;
+	intRect.width = 34;
+	framesForDigging.push_back(intRect);
+
+	intRect.left = 177;
+	intRect.width = 33;
+	framesForDigging.push_back(intRect);
+
+	intRect.left = 215;
+	intRect.width = 32;
+	framesForDigging.push_back(intRect);
 }
 
 sf::Vector2f Player::GetPosition()
@@ -20,6 +150,16 @@ void Player::UpdateMovement(PlayerMovement movement)
 	m_movement.isTop = movement.isTop;
 	m_movement.isRight = movement.isRight;
 	m_movement.isLeft = movement.isLeft;
+}
+
+void Player::UpdateMouseCoord(sf::Vector2f mouseCoord)
+{
+	m_digging.mouseCoord = mouseCoord;
+}
+
+void Player::UpdateDigging(bool isPlayerDig)
+{
+	m_digging.isDig = isPlayerDig;
 }
 
 void Player::DisplayMovement()
@@ -133,8 +273,11 @@ float Player::GetModuleVector(const sf::Vector2f& vect)
 	return std::sqrt(vect.x * vect.x + vect.y * vect.y);
 }
 
-void Player::PlayerMoveToRightSide()
+void Player::PlayerMoveToRightSide(float deltaTimeForMovement)
 {
+	numberFrameOfMovementLeft = 0;
+	timeForMovementLeft = 0;
+
 	sf::Vector2f positionPlayer = player.getPosition();
 	sf::Vector2f endPoint = { WIDTH_TILE * HEIGHT_MAP + 1, positionPlayer.y };
 
@@ -153,10 +296,16 @@ void Player::PlayerMoveToRightSide()
 	}
 
 	player.setPosition(positionPlayer + newDirection);
+
+	UpdateFramesMovementRight(deltaTimeForMovement);
+	ApplyToSpriteMovementRight();
 }
 
-void Player::PlayerMoveToLeftSide()
+void Player::PlayerMoveToLeftSide(float deltaTimeForMovement)
 {
+	numberFrameOfMovementRight = 0;
+	timeForMovementRight = 0;
+
 	sf::Vector2f positionPlayer = player.getPosition();
 	sf::Vector2f endPoint = { -1, positionPlayer.y };
 
@@ -173,8 +322,10 @@ void Player::PlayerMoveToLeftSide()
 	{
 		return;
 	}
-
 	player.setPosition(positionPlayer + newDirection);
+
+	UpdateFramesMovementLeft(deltaTimeForMovement);
+	ApplyToSpriteMovementLeft();
 }
 
 void Player::PlayerMoveToBottomSide()
@@ -204,14 +355,14 @@ void Player::PlayerMoveToBottomSide()
 void Player::PlayerMoveToTopSide()
 {
 	sf::Vector2f positionPlayer = player.getPosition();
-	sf::Vector2f endPoint = { positionPlayer.x, 0 };
+	sf::Vector2f endPoint = { positionPlayer.x, positionPlayer.y - PLAYER_HEIGHT * 1.5f };
 
 	sf::Vector2f motion = { endPoint.x - positionPlayer.x, endPoint.y - positionPlayer.y };
 	float moduleMotion = GetModuleVector(motion);
 	sf::Vector2f direction = { motion.x / moduleMotion, motion.y / moduleMotion };
 
 	float deltaTime = 0.016;
-	float movementOffset = SPEED_PLAYER * deltaTime + PLAYER_HEIGHT;
+	float movementOffset = SPEED_PLAYER * deltaTime;
 
 	sf::Vector2f newDirection = { direction.x * movementOffset, direction.y * movementOffset };
 
@@ -223,22 +374,97 @@ void Player::PlayerMoveToTopSide()
 	player.setPosition(positionPlayer + newDirection);
 }
 
-void Player::Update(sf::RenderTexture& castTexture, const sf::View& view)
+void Player::PlayerDig(sf::Vector2f viewPosition)
 {
-	//castTexture.clear();
+	if ((m_digging.mouseCoord.x > player.getPosition().x - viewPosition.x + WIDTH_TILE * 2 + 1) ||
+		(m_digging.mouseCoord.x < player.getPosition().x - viewPosition.x - WIDTH_TILE))
+	{
+		return;
+	}
+	
+	if ((m_digging.mouseCoord.y > player.getPosition().y - viewPosition.y + HEIGHT_TILE * 3 + 1) ||
+		(m_digging.mouseCoord.y < player.getPosition().y - viewPosition.y - HEIGHT_TILE - 1))
+	{
+		return;
+	}
 
-	PlayerMoveToBottomSide();
+	sf::Vector2f coordOfTile = { std::floor((m_digging.mouseCoord.y + viewPosition.y) / 25),
+		std::floor((m_digging.mouseCoord.x + viewPosition.x) / 25) };
+
+	int numberOfTile = coordOfTile.x * HEIGHT_MAP + coordOfTile.y;
+
+	m_map->DeleteStone(numberOfTile, coordOfTile);
+}
+
+void Player::Update(sf::RenderTexture& castTexture, const sf::View& view, float deltaTimeForMovement)
+{
+	if (!m_movement.isTop)
+	{
+		PlayerMoveToBottomSide();
+	}
 	if (m_movement.isRight)
 	{
-		PlayerMoveToRightSide();
+		PlayerMoveToRightSide(deltaTimeForMovement);
 	}
 	if (m_movement.isLeft)
 	{
-		PlayerMoveToLeftSide();
+		PlayerMoveToLeftSide(deltaTimeForMovement);
 	}
-	if (!m_movement.isBottom && m_movement.isTop)
+	if (!m_movement.isBottom)
 	{
 		PlayerMoveToTopSide();
 	}
+	if (m_digging.isDig)
+	{
+		PlayerDig(view.getCenter() - view.getSize() / 2.0f);
+	}
 	castTexture.draw(player);
+}
+
+void Player::ApplyToSpriteMovementRight()
+{
+	player.setTexture(textureMovingRight);
+	player.setTextureRect(framesForMovementRight[numberFrameOfMovementRight]);
+}
+
+void Player::AdvanceMovementRight()
+{
+	if (++numberFrameOfMovementRight >= COUNT_SPRITE_MOVING)
+	{
+		numberFrameOfMovementRight = 0;
+	}
+}
+
+void Player::UpdateFramesMovementRight(float deltaTime)
+{
+	timeForMovementRight += deltaTime;
+	while (timeForMovementRight >= DELAY_MOVEMENT)
+	{
+		timeForMovementRight -= DELAY_MOVEMENT;
+		AdvanceMovementRight();
+	}
+}
+
+void Player::ApplyToSpriteMovementLeft()
+{
+	player.setTexture(textureMovingLeft);
+	player.setTextureRect(framesForMovementLeft[numberFrameOfMovementLeft]);
+}
+
+void Player::AdvanceMovementLeft()
+{
+	if (++numberFrameOfMovementLeft >= COUNT_SPRITE_MOVING)
+	{
+		numberFrameOfMovementLeft = 0;
+	}
+}
+
+void Player::UpdateFramesMovementLeft(float deltaTime)
+{
+	timeForMovementLeft += deltaTime;
+	while (timeForMovementLeft >= DELAY_MOVEMENT)
+	{
+		timeForMovementLeft -= DELAY_MOVEMENT;
+		AdvanceMovementLeft();
+	}
 }

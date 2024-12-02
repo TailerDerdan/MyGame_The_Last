@@ -15,7 +15,7 @@ void redrawFrame(sf::RenderWindow& window, Map* map, Camera& camera, const sf::S
 struct Light
 {
     ShadowLight light;
-    std::vector<uint32_t> vec;
+    std::vector<uint64_t> vec;
     std::vector<GreedyQuad> res;
     std::vector<sf::Vertex> vertecies;
 
@@ -28,7 +28,6 @@ void MakeLight(Light& light, Map* map, sf::Vector2f playerCoord, bool& isFirstTi
     light.res.clear();
     light.vertecies.clear();
     light.blocks.clear();
-    light.blocks.resize(0);
 
     int radius = 3;
     
@@ -38,7 +37,7 @@ void MakeLight(Light& light, Map* map, sf::Vector2f playerCoord, bool& isFirstTi
     isFirstTimeOfSpreadLight = false;
 
     light.vec = light.light.MakeCircle(map->GetMapOfLightInBool());
-    light.res = light.light.GreedyMeshBinaryPlane(light.vec, 32);
+    light.res = light.light.GreedyMeshBinaryPlane(light.vec, 64);
     light.vertecies = light.light.CreateFromGreed(light.res);
 
     light.blocks.setPrimitiveType(sf::Quads);
@@ -69,7 +68,7 @@ int main()
     sf::Vector2f mouseCoords = { 0, 0 };
     bool isMouseMove = false;
     
-    sf::Clock timer;
+    sf::Clock clock;
     
     camera.SetPlayer(player);
 
@@ -77,20 +76,22 @@ int main()
 
     while (camera.m_window.isOpen())
     {
+        float deltaTimeForMovement = clock.restart().asSeconds();
+
         camera.Update(mouseCoords, isMouseMove);
 
         map->UpdateMap(WINDOW_WIDTH, WINDOW_HEIGHT, camera.GetView(), camera.castTexture);
 
-        player->Update(camera.castTexture, camera.GetView());
+        player->Update(camera.castTexture, camera.GetView(), deltaTimeForMovement);
 
         MakeLight(light, map, player->GetPosition(), isFirstTimeOfSpreadLight);
 
         camera.renderTextureForLight.draw(light.blocks);
 
-        shadowShader.setUniform("mousePosition", player->GetPosition());
+        shadowShader.setUniform("mousePosition", player->GetPosition() - camera.GetViewPosition());
         redrawFrame(camera.m_window, map, camera, shadowShader, light.blocks);
 
-        camera.m_window.setTitle(std::to_string(1 / timer.restart().asSeconds()));
+        camera.m_window.setTitle(std::to_string(1 / deltaTimeForMovement));
     }
 
     return 0;

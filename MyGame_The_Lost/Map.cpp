@@ -234,84 +234,6 @@ void Map::SpreadTheLight(sf::Vector2f& coord, int& radius, bool isFirstTimeOfSpr
 	FillFromCell(coord, radius);
 }
 
-//void Map::FillFromCell(sf::Vector2f& coord, int& radius)
-//{
-//	using TileForLight = std::pair<sf::Vector2f, int >;
-//
-//	std::queue<TileForLight> unvistedVertex;
-//	std::vector<TileForLight> visitedVertex;
-//
-//	TileForLight tile = { coord , radius };
-//
-//	unvistedVertex.push(tile);
-//
-//	while (!unvistedVertex.empty())
-//	{
-//		auto coordOfTile = unvistedVertex.back();
-//		unvistedVertex.pop();
-//
-//		mapOfTileOfLight[coordOfTile.first.y * HEIGHT_MAP + coordOfTile.first.x] = 1;
-//
-//		visitedVertex.push_back(coordOfTile);
-//
-//		if (!mapOfTileInBool[coordOfTile.first.y * HEIGHT_MAP + coordOfTile.first.x + 1])
-//		{
-//			sf::Vector2f newCoord = { coordOfTile.first.x + 1, coordOfTile.first.y };
-//			int newRadius = coordOfTile.second - 1;
-//
-//			TileForLight newTile = { newCoord , newRadius };
-//			auto iter = std::find(visitedVertex.begin(), visitedVertex.end(), newTile);
-//			if (iter == visitedVertex.end() && newRadius >= 0)
-//			{
-//				unvistedVertex.push(newTile);
-//
-//				mapOfTileOfLight[newCoord.y * HEIGHT_MAP + newCoord.x] = 1;
-//			}
-//
-//		}
-//		if (!mapOfTileInBool[coordOfTile.first.y * HEIGHT_MAP + coordOfTile.first.x - 1])
-//		{
-//			sf::Vector2f newCoord = { coordOfTile.first.x - 1, coordOfTile.first.y };
-//			int newRadius = coordOfTile.second - 1;
-//
-//			TileForLight newTile = { newCoord , newRadius };
-//			auto iter = std::find(visitedVertex.begin(), visitedVertex.end(), newTile);
-//			if (iter == visitedVertex.end() && newRadius >= 0)
-//			{
-//				unvistedVertex.push(newTile);
-//				mapOfTileOfLight[newCoord.y * HEIGHT_MAP + newCoord.x] = 1;
-//			}
-//
-//		}
-//		if (!mapOfTileInBool[(coordOfTile.first.y - 1) * HEIGHT_MAP + coordOfTile.first.x])
-//		{
-//			sf::Vector2f newCoord = { coordOfTile.first.x, coordOfTile.first.y - 1 };
-//			int newRadius = coordOfTile.second - 1;
-//
-//			TileForLight newTile = { newCoord , newRadius };
-//			auto iter = std::find(visitedVertex.begin(), visitedVertex.end(), newTile);
-//			if (iter == visitedVertex.end() && newRadius >= 0)
-//			{
-//				unvistedVertex.push(newTile);
-//				mapOfTileOfLight[newCoord.y * HEIGHT_MAP + newCoord.x] = 1;
-//			}
-//		}
-//		if (!mapOfTileInBool[(coordOfTile.first.y + 1) * HEIGHT_MAP + coordOfTile.first.x])
-//		{
-//			sf::Vector2f newCoord = { coordOfTile.first.x, coordOfTile.first.y + 1 };
-//			int newRadius = coordOfTile.second - 1;
-//
-//			TileForLight newTile = { newCoord , newRadius };
-//			auto iter = std::find(visitedVertex.begin(), visitedVertex.end(), newTile);
-//			if (iter == visitedVertex.end() && newRadius >= 0)
-//			{
-//				unvistedVertex.push(newTile);
-//				mapOfTileOfLight[newCoord.y * HEIGHT_MAP + newCoord.x] = 1;
-//			}
-//		}
-//	}
-//}
-
 void Map::DrawMap(sf::RenderWindow& window, sf::RenderTexture& castTexture)
 {
 	window.draw(sf::Sprite(castTexture.getTexture()));
@@ -353,4 +275,10 @@ std::array<std::array<int, HEIGHT_MAP>, WIDTH_MAP> Map::GetMapInEnum()
 std::vector<bool> Map::GetMapOfLightInBool()
 {
 	return mapOfTileOfLight;
+}
+
+void Map::DeleteStone(int numberOfTile, sf::Vector2f coordOfTile)
+{
+	generatedMap[coordOfTile.x][coordOfTile.y] = TypeTile::Wall;
+	mapOfTileInBool[numberOfTile] = 0;
 }

@@ -18,6 +18,8 @@ public:
 	TypeTile GetTypeOfTile(int numberOfTile);
 	void ChangeColorOfTile(int numberOfTile);
 
+	void DeleteStone(int numberOfTile, sf::Vector2f coordOfTile);
+
 	std::vector<Tile*> GetVectorTiles();
 	std::array<std::array<int, HEIGHT_MAP>, WIDTH_MAP> GetMapInEnum();
 	std::vector<bool> GetMapOfLightInBool();
