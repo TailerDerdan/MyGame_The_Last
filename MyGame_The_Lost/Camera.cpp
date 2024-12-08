@@ -99,6 +99,7 @@ void Camera::EventHandler(sf::Event& event, sf::Vector2f& mouseCoords, bool& isM
 			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
 			{
 				disasters->MakeRandomDisaster(m_player->GetPosition(), m_player->GetDirectionOfMovement());
+				//light->ChangeWorkingLight();
 			}
 		default:
 			break;
@@ -133,7 +134,7 @@ void Camera::Update(sf::Vector2f& mouseCoords, bool& isMouseMove, Disaster* disa
 void Camera::DrawRenderTexture(sf::RenderWindow& window, const sf::Shader& shadowShader)
 {
 	window.draw(sf::Sprite(castTexture.getTexture()));
-	//window.draw(sf::Sprite(renderTextureForLight.getTexture()), &shadowShader);
+	window.draw(sf::Sprite(renderTextureForLight.getTexture()), &shadowShader);
 }
 
 void Camera::SetPlayer(Player* player)

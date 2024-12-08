@@ -1,6 +1,7 @@
 #pragma once
 #define _USE_MATH_DEFINES
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 #include <GLFW/glfw3.h>
 #include <math.h>
 #include <iostream>

@@ -1,11 +1,17 @@
 #include "ShadowLight.h"
 
-ShadowLight::ShadowLight() {      }
+ShadowLight::ShadowLight() 
+{
+    isLightWork = true;
+}
+
 ShadowLight::~ShadowLight() {     }
 
 std::vector<uint64_t> ShadowLight::MakeCircle(const std::vector<bool>& mapOfLightInBool)
 {
     std::vector<uint64_t> matrix(HEIGHT_MAP, 0);
+
+    if (!isLightWork) return matrix;
 
     for (int y = 0; y < HEIGHT_MAP; ++y)
     {
@@ -19,6 +25,11 @@ std::vector<uint64_t> ShadowLight::MakeCircle(const std::vector<bool>& mapOfLigh
     }
 
     return matrix;
+}
+
+void ShadowLight::ChangeWorkingLight()
+{
+    isLightWork = !isLightWork;
 }
 
 std::vector<GreedyQuad> ShadowLight::GreedyMeshBinaryPlane(std::vector<uint64_t>& data, int size)

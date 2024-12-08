@@ -15,7 +15,7 @@ void redrawFrame(sf::RenderWindow& window, Map* map, Camera* camera, const sf::S
 
 struct Light
 {
-    ShadowLight light;
+    ShadowLight* light = new ShadowLight();
     std::vector<uint64_t> vec;
     std::vector<GreedyQuad> res;
     std::vector<sf::Vertex> vertecies;
@@ -37,9 +37,9 @@ void MakeLight(Light& light, Map* map, sf::Vector2f playerCoord, bool& isFirstTi
     map->SpreadTheLight(tilePlayerCoord, radius, isFirstTimeOfSpreadLight);
     isFirstTimeOfSpreadLight = false;
 
-    light.vec = light.light.MakeCircle(map->GetMapOfLightInBool());
-    light.res = light.light.GreedyMeshBinaryPlane(light.vec, 64);
-    light.vertecies = light.light.CreateFromGreed(light.res);
+    light.vec = light.light->MakeCircle(map->GetMapOfLightInBool());
+    light.res = light.light->GreedyMeshBinaryPlane(light.vec, 64);
+    light.vertecies = light.light->CreateFromGreed(light.res);
 
     light.blocks.setPrimitiveType(sf::Quads);
     light.blocks.resize(light.vertecies.size());
@@ -76,10 +76,11 @@ int main()
 
     bool isFirstTimeOfSpreadLight = true;
 
-    Disaster* disasters = new Disaster(map, camera->GetView());
+    Disaster* disasters = new Disaster(map, camera->GetView(), light.light);
 
     while (camera->m_window.isOpen())
     {
+        //disasters->MakeRandomDisaster(player->GetPosition(), player->GetDirectionOfMovement());
         float deltaTimeForMovement = clock.restart().asSeconds();
 
         camera->Update(mouseCoords, isMouseMove, disasters);
@@ -93,6 +94,8 @@ int main()
         camera->renderTextureForLight.draw(light.blocks);
 
         disasters->FallingStone(int(clockForFallingStone.getElapsedTime().asSeconds()) % 60, deltaTimeForMovement, camera->m_window);
+        disasters->Shake(deltaTimeForMovement, camera->m_window);
+        disasters->DoTurningOnTheLight();
 
         shadowShader.setUniform("mousePosition", player->GetPosition() - camera->GetViewPosition());
         redrawFrame(camera->m_window, map, camera, shadowShader, light.blocks);

@@ -97,6 +97,11 @@ void Map::SetRandomGeneration()
 	{
 		for (int iterY = 0; iterY < HEIGHT_MAP; iterY++)
 		{
+			if (iterX == 0 || iterY == 0 || iterX == WIDTH_MAP - 1 || iterY == HEIGHT_MAP - 1)
+			{
+				generatedMap[iterX][iterY] = TypeTile::Stone;
+				continue;
+			}
 			int randomNumber = rand() % 100;
 			if (randomNumber < 58)
 			{
@@ -112,9 +117,9 @@ void Map::SetRandomGeneration()
 
 void Map::GetNextIteration()
 {
-	for (int iterX = 0; iterX < WIDTH_MAP; iterX++)
+	for (int iterX = 1; iterX < WIDTH_MAP - 1; iterX++)
 	{
-		for (int iterY = 0; iterY < HEIGHT_MAP; iterY++)
+		for (int iterY = 1; iterY < HEIGHT_MAP - 1; iterY++)
 		{
 			int countOfNeighbor = GetCountOfWallNeighbor({ iterX, iterY });
 			
@@ -129,9 +134,9 @@ void Map::GetNextIteration()
 		}
 	}
 
-	for (int iterX = 0; iterX < WIDTH_MAP; iterX++)
+	for (int iterX = 1; iterX < WIDTH_MAP - 1; iterX++)
 	{
-		for (int iterY = 0; iterY < HEIGHT_MAP; iterY++)
+		for (int iterY = 1; iterY < HEIGHT_MAP - 1; iterY++)
 		{
 			generatedMap[iterX][iterY] = newGeneratedMap[iterX][iterY];
 		}

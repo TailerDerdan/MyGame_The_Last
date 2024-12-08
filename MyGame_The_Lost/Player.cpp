@@ -7,7 +7,7 @@ Player::Player(Map* map)
 
 	player.setTexture(textureMovingRight);
 	player.setTextureRect({ 0, 0, PLAYER_WIDTH, PLAYER_HEIGHT });
-	player.setPosition({ 275, 600 });
+	player.setPosition({ 175, 550 });
 
 	framesForMovementLeft.resize(COUNT_SPRITE_MOVING);
 
@@ -395,7 +395,9 @@ void Player::PlayerDig(sf::Vector2f viewPosition)
 	sf::Vector2f coordOfTile = { std::floor((m_digging.mouseCoord.y + viewPosition.y) / HEIGHT_TILE),
 		std::floor((m_digging.mouseCoord.x + viewPosition.x) / WIDTH_TILE) };
 
-	//std::cout << coordOfTile.x << " " << coordOfTile.y << std::endl;
+	if (coordOfTile.x == 0 || coordOfTile.y == 0 || 
+		coordOfTile.x == WIDTH_MAP - 1 || coordOfTile.x == WIDTH_MAP || 
+		coordOfTile.y == HEIGHT_MAP - 1 || coordOfTile.y == HEIGHT_MAP) return;
 
 	int numberOfTile = coordOfTile.x * HEIGHT_MAP + coordOfTile.y;
 

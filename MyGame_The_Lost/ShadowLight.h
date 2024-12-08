@@ -17,6 +17,8 @@ public:
 
 	std::vector<sf::Vertex> CreateFromGreed(const std::vector<GreedyQuad>& quads);
 
+    void ChangeWorkingLight();
+
 	ShadowLight();
 	~ShadowLight();
 
@@ -46,4 +48,7 @@ private:
     {
         return CountTrailingZeros(~n);
     }
+
+private:
+    bool isLightWork = true;
 };

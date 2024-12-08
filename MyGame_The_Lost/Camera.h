@@ -18,9 +18,6 @@ public:
 	void Update(sf::Vector2f& mouseCoords, bool& isMouseMove, Disaster* disasters);
 	sf::Vector2f GetViewPosition();
 
-	void Shake(float dTime);
-	void SetParamsForShake(float shakingPower, float maxTime);
-
 	void DrawRenderTexture(sf::RenderWindow& window, const sf::Shader& shadowShader);
 
 	void SetPlayer(Player* player);
