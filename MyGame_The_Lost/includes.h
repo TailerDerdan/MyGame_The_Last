@@ -8,3 +8,6 @@
 #include <array>
 #include <queue>
 #include <map>
+
+constexpr unsigned WINDOW_WIDTH = 1920;
+constexpr unsigned WINDOW_HEIGHT = 1080;

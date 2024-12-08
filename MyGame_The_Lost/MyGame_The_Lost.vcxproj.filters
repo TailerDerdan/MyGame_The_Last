@@ -30,6 +30,9 @@
     <ClCompile Include="ShadowLight.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="Disaster.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="includes.h">
@@ -50,9 +53,12 @@
     <ClInclude Include="ShadowLight.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
+    <ClInclude Include="Disaster.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shadow.frag" />
-    <None Include="shadow.vert" />
+    <None Include="light.frag" />
+    <None Include="light.vert" />
   </ItemGroup>
 </Project>

@@ -1,9 +1,7 @@
 #pragma once
 #include "includes.h"
 #include "Player.h"
-
-constexpr unsigned WINDOW_WIDTH = 1920;
-constexpr unsigned WINDOW_HEIGHT = 1080;
+#include "Disaster.h"
 
 const float SPEED_CAMERA = 1.0f;
 
@@ -17,8 +15,11 @@ public:
 
 	Camera();
 
-	void Update(sf::Vector2f& mouseCoords, bool& isMouseMove);
+	void Update(sf::Vector2f& mouseCoords, bool& isMouseMove, Disaster* disasters);
 	sf::Vector2f GetViewPosition();
+
+	void Shake(float dTime);
+	void SetParamsForShake(float shakingPower, float maxTime);
 
 	void DrawRenderTexture(sf::RenderWindow& window, const sf::Shader& shadowShader);
 
@@ -28,10 +29,12 @@ public:
 private:
 	void OnMousePressed(const sf::Event::MouseButtonEvent& event, sf::Vector2f& mousePosition);
 	void OnMouseMoved(const sf::Event::MouseMoveEvent& event, sf::Vector2f& mousePosition);
-	void EventHandler(sf::Event& event, sf::Vector2f& mouseCoords, bool& isMouseMove);
+	void EventHandler(sf::Event& event, sf::Vector2f& mouseCoords, bool& isMouseMove, Disaster* disasters);
 
 	void KeyCameraHandler();
 	void PlayerHandler();
+
+	float RandomAngleForShake();
 
 private:
 	sf::View m_view;

@@ -26,7 +26,7 @@ Map::Map(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, const sf::View& view, 
 	}
 }
 
-int Map::GetCountOfNeighbor(sf::Vector2i coordOfTile)
+int Map::GetCountOfWallNeighbor(sf::Vector2i coordOfTile)
 {
 	int countOfNeighbor = 0;
 
@@ -64,6 +64,33 @@ int Map::GetCountOfNeighbor(sf::Vector2i coordOfTile)
 	return countOfNeighbor;
 }
 
+int Map::GetCountOfStoneNeighbor(sf::Vector2i coordOfTile)
+{
+	int countOfNeighbor = 0;
+
+	if (coordOfTile.x - 1 >= 0 && generatedMap[coordOfTile.x - 1][coordOfTile.y] == TypeTile::Stone)
+	{
+		countOfNeighbor++;
+	}
+
+	if (coordOfTile.x + 1 < WIDTH_MAP && generatedMap[coordOfTile.x + 1][coordOfTile.y] == TypeTile::Stone)
+	{
+		countOfNeighbor++;
+	}
+
+	if (coordOfTile.y - 1 >= 0 && generatedMap[coordOfTile.x][coordOfTile.y - 1] == TypeTile::Stone)
+	{
+		countOfNeighbor++;
+	}
+
+	if (coordOfTile.y + 1 < HEIGHT_MAP && generatedMap[coordOfTile.x][coordOfTile.y + 1] == TypeTile::Stone)
+	{
+		countOfNeighbor++;
+	}
+
+	return countOfNeighbor;
+}
+
 void Map::SetRandomGeneration()
 {
 	for (int iterX = 0; iterX < WIDTH_MAP; iterX++)
@@ -89,7 +116,7 @@ void Map::GetNextIteration()
 	{
 		for (int iterY = 0; iterY < HEIGHT_MAP; iterY++)
 		{
-			int countOfNeighbor = GetCountOfNeighbor({ iterX, iterY });
+			int countOfNeighbor = GetCountOfWallNeighbor({ iterX, iterY });
 			
 			if (countOfNeighbor > 4)
 			{
@@ -139,16 +166,19 @@ void Map::UpdateMap(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, const sf::V
 
 	for (int iterX = 0; iterX < WIDTH_MAP; iterX++)
 	{
+		m_iterX = iterX;
 		for (int iterY = 0; iterY < HEIGHT_MAP; iterY++)
 		{
 			int numberOfTile = iterX * HEIGHT_MAP + iterY;
 			int yCoord = iterX;
 			int xCoord = iterY;
 
+			m_iterY = iterY;
+
 			if ((xCoord * WIDTH_TILE >= viewPosition.x && xCoord * WIDTH_TILE <= WIDTH_WINDOW + viewPosition.x) &&
 				(yCoord * HEIGHT_TILE >= viewPosition.y && yCoord * HEIGHT_TILE <= HEIGHT_WINDOW + viewPosition.y))
 			{
-				if (generatedMap[iterX][iterY] == TypeTile::Wall)
+				if (generatedMap[iterX][iterY] == TypeTile::Wall && mapOfTexture[iterForVector])
 				{
 					mapOfTexture[iterForVector]->number = numberOfTile;
 					
@@ -160,8 +190,9 @@ void Map::UpdateMap(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, const sf::V
 					mapOfTexture[iterForVector]->sprite.setPosition({ float(xCoord * WIDTH_TILE), float(yCoord * HEIGHT_TILE) });
 
 				}
-				if (generatedMap[iterX][iterY] == TypeTile::Stone)
+				if (generatedMap[iterX][iterY] == TypeTile::Stone && mapOfTexture[iterForVector])
 				{
+
 					mapOfTexture[iterForVector]->number = numberOfTile;
 
 					mapOfTexture[iterForVector]->typeTile = TypeTile::Stone;
@@ -171,7 +202,12 @@ void Map::UpdateMap(const int WIDTH_WINDOW, const int HEIGHT_WINDOW, const sf::V
 
 					mapOfTexture[iterForVector]->sprite.setPosition({ float(xCoord * WIDTH_TILE), float(yCoord * HEIGHT_TILE) });
 				}
-				castTexture.draw(mapOfTexture[iterForVector]->sprite);
+
+				if (mapOfTexture[iterForVector])
+				{
+					castTexture.draw(mapOfTexture[iterForVector]->sprite);
+				}
+				
 				iterForVector++;
 			}
 		}
@@ -279,6 +315,18 @@ std::vector<bool> Map::GetMapOfLightInBool()
 
 void Map::DeleteStone(int numberOfTile, sf::Vector2f coordOfTile)
 {
-	generatedMap[coordOfTile.x][coordOfTile.y] = TypeTile::Wall;
+	generatedMap[int(coordOfTile.x)][int(coordOfTile.y)] = TypeTile::Wall;
 	mapOfTileInBool[numberOfTile] = 0;
+}
+
+void Map::MoveStoneDown(sf::Vector2f coordOfTile)
+{
+	if (coordOfTile.x == WIDTH_MAP)
+	{
+		generatedMap[WIDTH_MAP - 1][HEIGHT_MAP - 1] = TypeTile::Stone;
+		return;
+	}
+
+	generatedMap[coordOfTile.x - 1][coordOfTile.y] = TypeTile::Wall;
+	generatedMap[coordOfTile.x][coordOfTile.y] = TypeTile::Stone;
 }

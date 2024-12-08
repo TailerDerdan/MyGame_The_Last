@@ -50,6 +50,8 @@ public:
 	void UpdateDigging(bool isPlayerDig);
 	void DisplayMovement();
 
+	bool GetDirectionOfMovement();
+
 	sf::Vector2f GetPosition();
 
 	~Player();
@@ -87,6 +89,8 @@ private:
 	sf::Sprite player;
 
 	Map* m_map;
+
+	bool isPlayerMovementToRight = true;
 
 	std::vector<sf::IntRect> framesForMovementRight;
 	std::vector<sf::IntRect> framesForMovementLeft;

@@ -7,7 +7,7 @@ Player::Player(Map* map)
 
 	player.setTexture(textureMovingRight);
 	player.setTextureRect({ 0, 0, PLAYER_WIDTH, PLAYER_HEIGHT });
-	player.setPosition({ 250, 50 });
+	player.setPosition({ 275, 600 });
 
 	framesForMovementLeft.resize(COUNT_SPRITE_MOVING);
 
@@ -275,6 +275,8 @@ float Player::GetModuleVector(const sf::Vector2f& vect)
 
 void Player::PlayerMoveToRightSide(float deltaTimeForMovement)
 {
+	isPlayerMovementToRight = true;
+
 	numberFrameOfMovementLeft = 0;
 	timeForMovementLeft = 0;
 
@@ -303,6 +305,8 @@ void Player::PlayerMoveToRightSide(float deltaTimeForMovement)
 
 void Player::PlayerMoveToLeftSide(float deltaTimeForMovement)
 {
+	isPlayerMovementToRight = false;
+
 	numberFrameOfMovementRight = 0;
 	timeForMovementRight = 0;
 
@@ -388,8 +392,10 @@ void Player::PlayerDig(sf::Vector2f viewPosition)
 		return;
 	}
 
-	sf::Vector2f coordOfTile = { std::floor((m_digging.mouseCoord.y + viewPosition.y) / 25),
-		std::floor((m_digging.mouseCoord.x + viewPosition.x) / 25) };
+	sf::Vector2f coordOfTile = { std::floor((m_digging.mouseCoord.y + viewPosition.y) / HEIGHT_TILE),
+		std::floor((m_digging.mouseCoord.x + viewPosition.x) / WIDTH_TILE) };
+
+	//std::cout << coordOfTile.x << " " << coordOfTile.y << std::endl;
 
 	int numberOfTile = coordOfTile.x * HEIGHT_MAP + coordOfTile.y;
 
@@ -467,4 +473,9 @@ void Player::UpdateFramesMovementLeft(float deltaTime)
 		timeForMovementLeft -= DELAY_MOVEMENT;
 		AdvanceMovementLeft();
 	}
+}
+
+bool Player::GetDirectionOfMovement()
+{
+	return isPlayerMovementToRight;
 }

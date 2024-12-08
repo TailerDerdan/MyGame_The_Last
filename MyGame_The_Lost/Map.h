@@ -20,6 +20,10 @@ public:
 
 	void DeleteStone(int numberOfTile, sf::Vector2f coordOfTile);
 
+	int GetCountOfStoneNeighbor(sf::Vector2i coordOfTile);
+
+	void MoveStoneDown(sf::Vector2f coordOfTile);
+
 	std::vector<Tile*> GetVectorTiles();
 	std::array<std::array<int, HEIGHT_MAP>, WIDTH_MAP> GetMapInEnum();
 	std::vector<bool> GetMapOfLightInBool();
@@ -29,7 +33,7 @@ private:
 
 	void CreateTileForMap();
 
-	int GetCountOfNeighbor(sf::Vector2i coordOfTile);
+	int GetCountOfWallNeighbor(sf::Vector2i coordOfTile);
 	void SetRandomGeneration();
 	void GetNextIteration();
 
@@ -45,6 +49,9 @@ private:
 	sf::Texture textureOfCave;
 
 	std::vector<Tile*> mapOfTexture;
+
+	int m_iterX = 0;
+	int m_iterY = 0;
 
 	std::vector<bool> mapOfTileInBool;
 	std::vector<bool> mapOfTileOfLight;

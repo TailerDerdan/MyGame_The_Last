@@ -11,10 +11,9 @@ Camera::Camera()
 
 	renderTextureForLight.create(WINDOW_WIDTH, WINDOW_HEIGHT);
 	castTexture.create(WINDOW_WIDTH, WINDOW_HEIGHT);
+	castTexture.setSmooth(true);
 
 	m_player = nullptr;
-
-	castTexture.setSmooth(true);
 
 	viewPosition = m_view.getCenter() - m_view.getSize() / 2.0f;
 }
@@ -75,7 +74,7 @@ void Camera::OnMouseMoved(const sf::Event::MouseMoveEvent& event, sf::Vector2f& 
 	mousePosition = { float(event.x), float(event.y) };
 }
 
-void Camera::EventHandler(sf::Event& event, sf::Vector2f& mouseCoords, bool& isMouseMove)
+void Camera::EventHandler(sf::Event& event, sf::Vector2f& mouseCoords, bool& isMouseMove, Disaster* disasters)
 {
 	PlayerHandler();
 	KeyCameraHandler();
@@ -96,6 +95,11 @@ void Camera::EventHandler(sf::Event& event, sf::Vector2f& mouseCoords, bool& isM
 		case sf::Event::MouseButtonReleased:
 			isMouseMove = false;
 			break;
+		case sf::Event::KeyPressed:
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
+			{
+				disasters->MakeRandomDisaster(m_player->GetPosition(), m_player->GetDirectionOfMovement());
+			}
 		default:
 			break;
 	}
@@ -111,7 +115,7 @@ sf::Vector2f Camera::GetViewPosition()
 	return viewPosition;
 }
 
-void Camera::Update(sf::Vector2f& mouseCoords, bool& isMouseMove)
+void Camera::Update(sf::Vector2f& mouseCoords, bool& isMouseMove, Disaster* disasters)
 {
 	castTexture.setView(m_view);
 	castTexture.clear();
@@ -122,14 +126,14 @@ void Camera::Update(sf::Vector2f& mouseCoords, bool& isMouseMove)
 	sf::Event event;
 	while (m_window.pollEvent(event))
 	{
-		EventHandler(event, mouseCoords, isMouseMove);
+		EventHandler(event, mouseCoords, isMouseMove, disasters);
 	}
 }
 
 void Camera::DrawRenderTexture(sf::RenderWindow& window, const sf::Shader& shadowShader)
 {
 	window.draw(sf::Sprite(castTexture.getTexture()));
-	window.draw(sf::Sprite(renderTextureForLight.getTexture()), &shadowShader);
+	//window.draw(sf::Sprite(renderTextureForLight.getTexture()), &shadowShader);
 }
 
 void Camera::SetPlayer(Player* player)

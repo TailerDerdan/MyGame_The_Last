@@ -5,13 +5,13 @@ ShadowLight::~ShadowLight() {     }
 
 std::vector<uint64_t> ShadowLight::MakeCircle(const std::vector<bool>& mapOfLightInBool)
 {
-    std::vector<uint64_t> matrix(200, 0);
+    std::vector<uint64_t> matrix(HEIGHT_MAP, 0);
 
-    for (int y = 0; y < 200; ++y)
+    for (int y = 0; y < HEIGHT_MAP; ++y)
     {
-        for (int x = 0; x < 154; ++x)
+        for (int x = 0; x < WIDTH_MAP; ++x)
         {
-            if (mapOfLightInBool[x * 200 + y])
+            if (mapOfLightInBool[x * HEIGHT_MAP + y])
             {
                 matrix[y] |= (uint64_t(1) << x);
             }
@@ -76,6 +76,8 @@ std::vector<sf::Vertex> ShadowLight::CreateFromGreed(const std::vector<GreedyQua
     std::vector<sf::Vertex> res;
     const float textureSize = 25;
 
+    int colorGray = 5;
+
     for (auto i : quads)
     {
         sf::Vertex topLeft;
@@ -89,15 +91,15 @@ std::vector<sf::Vertex> ShadowLight::CreateFromGreed(const std::vector<GreedyQua
 
         topRight.position = sf::Vector2f(i.x + i.w, i.y) * textureSize;
         topRight.texCoords = { 0, 1 };
-        topLeft.color = sf::Color(255, 255, 255);
+        topRight.color = sf::Color(255, 255, 255);
 
         botRight.position = sf::Vector2f(i.x + i.w, i.y + i.h) * textureSize;
-        topLeft.color = sf::Color(255, 255, 255);
         botRight.texCoords = { 1, 1 };
+        botRight.color = sf::Color(255, 255, 255);
 
         botLeft.position = sf::Vector2f(i.x, i.y + i.h) * textureSize;
         botLeft.texCoords = { 1, 0 };
-        topLeft.color = sf::Color(255, 255, 255);
+        botLeft.color = sf::Color(255, 255, 255);
 
         res.push_back(topLeft);
         res.push_back(topRight);
