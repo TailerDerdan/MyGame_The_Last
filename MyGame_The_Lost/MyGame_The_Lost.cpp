@@ -10,6 +10,7 @@ void redrawFrame(sf::RenderWindow& window, Map* map, Camera* camera, const sf::S
 
     window.display();
     camera->castTexture.display();
+    camera->castTextureForWater.display();
     camera->renderTextureForLight.display();
 }
 
@@ -61,9 +62,9 @@ int main()
     Camera* camera = new Camera();
 
     sf::Texture textureOfCave;
-    textureOfCave.loadFromFile("../assets/textureForCave.jpg");
+    textureOfCave.loadFromFile("../assets/textureForCave.png");
 
-    Map* map = new Map(WINDOW_WIDTH, WINDOW_HEIGHT, camera->GetView(), camera->castTexture, textureOfCave);
+    Map* map = new Map(camera->GetView(), camera->castTexture, textureOfCave, camera->castTextureForWater);
     Player* player = new Player(map);
 
     sf::Vector2f mouseCoords = { 0, 0 };
@@ -84,8 +85,9 @@ int main()
         float deltaTimeForMovement = clock.restart().asSeconds();
 
         camera->Update(mouseCoords, isMouseMove, disasters);
+        map->MoveWater();
 
-        map->UpdateMap(WINDOW_WIDTH, WINDOW_HEIGHT, camera->GetView(), camera->castTexture);
+        map->UpdateMap(camera->GetView(), camera->castTexture, camera->castTextureForWater);
 
         player->Update(camera->castTexture, camera->GetView(), deltaTimeForMovement);
 
@@ -93,7 +95,7 @@ int main()
 
         camera->renderTextureForLight.draw(light.blocks);
 
-        disasters->FallingStone(int(clockForFallingStone.getElapsedTime().asSeconds()) % 60, deltaTimeForMovement, camera->m_window);
+        disasters->FallingStone(deltaTimeForMovement, camera->m_window);
         disasters->Shake(deltaTimeForMovement, camera->m_window);
         disasters->DoTurningOnTheLight();
 

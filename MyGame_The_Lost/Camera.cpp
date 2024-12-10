@@ -10,8 +10,13 @@ Camera::Camera()
 	m_window.setView(m_view);
 
 	renderTextureForLight.create(WINDOW_WIDTH, WINDOW_HEIGHT);
+	renderTextureForLight.setSmooth(true);
+
 	castTexture.create(WINDOW_WIDTH, WINDOW_HEIGHT);
 	castTexture.setSmooth(true);
+
+	/*castTextureForWater.create(WINDOW_WIDTH, WINDOW_HEIGHT);
+	castTextureForWater.setSmooth(true);*/
 
 	m_player = nullptr;
 
@@ -121,6 +126,9 @@ void Camera::Update(sf::Vector2f& mouseCoords, bool& isMouseMove, Disaster* disa
 	castTexture.setView(m_view);
 	castTexture.clear();
 
+	castTextureForWater.setView(m_view);
+	castTextureForWater.clear();
+
 	renderTextureForLight.setView(m_view);
 	renderTextureForLight.clear();
 
@@ -134,7 +142,8 @@ void Camera::Update(sf::Vector2f& mouseCoords, bool& isMouseMove, Disaster* disa
 void Camera::DrawRenderTexture(sf::RenderWindow& window, const sf::Shader& shadowShader)
 {
 	window.draw(sf::Sprite(castTexture.getTexture()));
-	window.draw(sf::Sprite(renderTextureForLight.getTexture()), &shadowShader);
+	//window.draw(sf::Sprite(castTextureForWater.getTexture()));
+	//window.draw(sf::Sprite(renderTextureForLight.getTexture()), &shadowShader);
 }
 
 void Camera::SetPlayer(Player* player)

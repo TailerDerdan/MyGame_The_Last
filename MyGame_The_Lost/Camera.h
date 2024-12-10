@@ -3,7 +3,7 @@
 #include "Player.h"
 #include "Disaster.h"
 
-const float SPEED_CAMERA = 1.0f;
+const float SPEED_CAMERA = 4.0f;
 
 class Camera
 {
@@ -12,6 +12,7 @@ public:
 
 	sf::RenderTexture castTexture;
 	sf::RenderTexture renderTextureForLight;
+	sf::RenderTexture castTextureForWater;
 
 	Camera();
 

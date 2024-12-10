@@ -34,7 +34,7 @@ public:
 	Disaster(Map* map, sf::View view, ShadowLight* light);
 
 	void MakeRandomDisaster(sf::Vector2f playerCoord, bool isPlayerMovementToRight);
-	void FallingStone(int time, float dTime, sf::RenderWindow& window);
+	void FallingStone(float dTime, sf::RenderWindow& window);
 	void Shake(float dTime, sf::RenderWindow& window);
 	void DoTurningOnTheLight();
 
@@ -77,6 +77,8 @@ private:
 	sf::Music soundOfRockfall;
 	sf::Music soundOfTurningOn;
 	sf::Music soundOfTurningOff;
+
+	sf::Clock timerForRockfall;
 
 	sf::Clock timerForLight;
 	bool isLightWork = true;
