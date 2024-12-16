@@ -8,13 +8,6 @@ enum TypeTile
 {
 	Wall,
 	Stone,
-
-	Water1,
-	Water3,
-	Water5,
-	Water8,
-	Water10,
-	
 	WaterInStone,
 };
 
@@ -32,5 +25,20 @@ struct Tile
 	{
 		typeTile = TypeTile::Wall;
 		number = 0;
+	}
+};
+
+struct BlockWater
+{
+	double weight = 0.0f;
+	sf::RectangleShape block;
+	sf::Vector2f coord;
+
+	bool operator==(const BlockWater& rhs)
+	{
+		if (rhs.coord == this->coord)
+		{
+			return true;
+		}
 	}
 };

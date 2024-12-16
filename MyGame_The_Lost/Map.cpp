@@ -36,6 +36,10 @@ int Map::Random(int min, int max)
 	std::uniform_int_distribution<std::mt19937::result_type> dist(min, max);
 
 	return dist(rng);
+
+	/*int randomInt = rand() % 100;
+
+	return randomInt;*/
 }
 
 int Map::GetCountOfWallNeighbor(sf::Vector2i coordOfTile)
@@ -168,17 +172,36 @@ void Map::FillWaterFromCell(sf::Vector2f coord, int radius)
 {
 	if (coord.y == -1 || coord.x == -1 || coord.y == HEIGHT_MAP || coord.x == WIDTH_MAP) return;
 
-	if (generatedMap[coord.x][coord.y] == TypeTile::Water10 || generatedMap[coord.x][coord.y] == TypeTile::WaterInStone) return;
+	BlockWater water;
+	water.coord = { coord.x, coord.y };
+	water.block.setFillColor(sf::Color(0, 0, 255, 80));
+	water.block.setSize({ WIDTH_TILE, HEIGHT_TILE });
+	water.block.setPosition({ coord.y * HEIGHT_TILE, coord.x * WIDTH_TILE });
+	water.weight = 1.0;
 
-	if (generatedMap[coord.x][coord.y] == TypeTile::Stone)
+	bool isThisBlock = false;
+	for (auto waterBlock : blocksWater)
+	{
+		if (waterBlock.coord == water.coord)
+		{
+			isThisBlock = true;
+			break;
+		}
+	}
+
+	if (!isThisBlock)
+	{
+		weightAllWater += water.weight;
+		blocksWater.push_back(water);
+	}
+
+	if (generatedMap[coord.x][coord.y] == TypeTile::Stone || generatedMap[coord.x][coord.y] == TypeTile::WaterInStone)
 	{
 		generatedMap[coord.x][coord.y] = TypeTile::WaterInStone;
-		coordsOfBlockWater.push_back(std::pair(TypeTile::WaterInStone, coord));
 	}
 	else
 	{
-		generatedMap[coord.x][coord.y] = TypeTile::Water10;
-		coordsOfBlockWater.push_back(std::pair(TypeTile::Water10, coord));
+		generatedMap[coord.x][coord.y] = TypeTile::Wall;
 	}
 	countOfWater++;
 	
@@ -233,7 +256,7 @@ void Map::GenerateRandomWater()
 		}
 	}*/
 
-	SpreadWater(sf::Vector2f(float(10), float(10)));
+	SpreadWater(sf::Vector2f(float(10), float(5)));
 }
 
 void Map::CreateTileForMap()
@@ -266,7 +289,7 @@ void Map::SetParamsForStone(ParamsForTile params)
 
 void Map::SetParamsForWall(ParamsForTile params)
 {
-	if (generatedMap[params.iterX][params.iterY] == TypeTile::Wall && mapOfTexture[params.iterForVector])
+	if ((generatedMap[params.iterX][params.iterY] == TypeTile::Wall) && mapOfTexture[params.iterForVector])
 	{
 
 		mapOfTexture[params.iterForVector]->number = params.numberOfTile;
@@ -294,96 +317,6 @@ void Map::SetParamsForWaterStone(ParamsForTile params)
 		mapOfTexture[params.iterForVector]->typeTile = TypeTile::WaterInStone;
 
 		mapOfTexture[params.iterForVector]->texture = { 0, 0, WIDTH_TILE, HEIGHT_TILE };
-		mapOfTexture[params.iterForVector]->sprite.setTextureRect(mapOfTexture[params.iterForVector]->texture);
-
-		mapOfTexture[params.iterForVector]->sprite.setPosition({ float(params.xCoord * WIDTH_TILE), float(params.yCoord * HEIGHT_TILE) });
-	}
-}
-
-void Map::SetParamsForWater10(ParamsForTile params)
-{
-	if (generatedMap[params.iterX][params.iterY] == TypeTile::Water10 && mapOfTexture[params.iterForVector])
-	{
-
-		mapOfTexture[params.iterForVector]->number = params.numberOfTile;
-
-		mapOfTexture[params.iterForVector]->weight = 1.0f;
-
-		mapOfTexture[params.iterForVector]->typeTile = TypeTile::Water10;
-
-		mapOfTexture[params.iterForVector]->texture = { 50, 0, WIDTH_TILE, HEIGHT_TILE };
-		mapOfTexture[params.iterForVector]->sprite.setTextureRect(mapOfTexture[params.iterForVector]->texture);
-
-		mapOfTexture[params.iterForVector]->sprite.setPosition({ float(params.xCoord * WIDTH_TILE), float(params.yCoord * HEIGHT_TILE) });
-	}
-}
-
-void Map::SetParamsForWater8(ParamsForTile params)
-{
-	if (generatedMap[params.iterX][params.iterY] == TypeTile::Water8 && mapOfTexture[params.iterForVector])
-	{
-
-		mapOfTexture[params.iterForVector]->number = params.numberOfTile;
-
-		mapOfTexture[params.iterForVector]->weight = 0.8f;
-
-		mapOfTexture[params.iterForVector]->typeTile = TypeTile::Water8;
-
-		mapOfTexture[params.iterForVector]->texture = { 75, 0, WIDTH_TILE, HEIGHT_TILE };
-		mapOfTexture[params.iterForVector]->sprite.setTextureRect(mapOfTexture[params.iterForVector]->texture);
-
-		mapOfTexture[params.iterForVector]->sprite.setPosition({ float(params.xCoord * WIDTH_TILE), float(params.yCoord * HEIGHT_TILE) });
-	}
-}
-
-void Map::SetParamsForWater5(ParamsForTile params)
-{
-	if (generatedMap[params.iterX][params.iterY] == TypeTile::Water5 && mapOfTexture[params.iterForVector])
-	{
-
-		mapOfTexture[params.iterForVector]->number = params.numberOfTile;
-
-		mapOfTexture[params.iterForVector]->weight = 0.5f;
-
-		mapOfTexture[params.iterForVector]->typeTile = TypeTile::Water5;
-
-		mapOfTexture[params.iterForVector]->texture = { 100, 0, WIDTH_TILE, HEIGHT_TILE };
-		mapOfTexture[params.iterForVector]->sprite.setTextureRect(mapOfTexture[params.iterForVector]->texture);
-
-		mapOfTexture[params.iterForVector]->sprite.setPosition({ float(params.xCoord * WIDTH_TILE), float(params.yCoord * HEIGHT_TILE) });
-	}
-}
-
-void Map::SetParamsForWater3(ParamsForTile params)
-{
-	if (generatedMap[params.iterX][params.iterY] == TypeTile::Water3 && mapOfTexture[params.iterForVector])
-	{
-
-		mapOfTexture[params.iterForVector]->number = params.numberOfTile;
-
-		mapOfTexture[params.iterForVector]->weight = 0.3f;
-
-		mapOfTexture[params.iterForVector]->typeTile = TypeTile::Water3;
-
-		mapOfTexture[params.iterForVector]->texture = { 125, 0, WIDTH_TILE, HEIGHT_TILE };
-		mapOfTexture[params.iterForVector]->sprite.setTextureRect(mapOfTexture[params.iterForVector]->texture);
-
-		mapOfTexture[params.iterForVector]->sprite.setPosition({ float(params.xCoord * WIDTH_TILE), float(params.yCoord * HEIGHT_TILE) });
-	}
-}
-
-void Map::SetParamsForWater1(ParamsForTile params)
-{
-	if (generatedMap[params.iterX][params.iterY] == TypeTile::Water1 && mapOfTexture[params.iterForVector])
-	{
-
-		mapOfTexture[params.iterForVector]->number = params.numberOfTile;
-
-		mapOfTexture[params.iterForVector]->weight = 0.1f;
-
-		mapOfTexture[params.iterForVector]->typeTile = TypeTile::Water1;
-
-		mapOfTexture[params.iterForVector]->texture = { 150, 0, WIDTH_TILE, HEIGHT_TILE };
 		mapOfTexture[params.iterForVector]->sprite.setTextureRect(mapOfTexture[params.iterForVector]->texture);
 
 		mapOfTexture[params.iterForVector]->sprite.setPosition({ float(params.xCoord * WIDTH_TILE), float(params.yCoord * HEIGHT_TILE) });
@@ -422,11 +355,6 @@ void Map::UpdateMap(const sf::View& view, sf::RenderTexture& castTexture, sf::Re
 				SetParamsForStone(params);
 				SetParamsForWaterStone(params);
 				SetParamsForWall(params);
-				SetParamsForWater10(params);
-				SetParamsForWater8(params);
-				SetParamsForWater5(params);
-				SetParamsForWater3(params);
-				SetParamsForWater1(params);
 
 				if (mapOfTexture[iterForVector])
 				{
@@ -435,6 +363,14 @@ void Map::UpdateMap(const sf::View& view, sf::RenderTexture& castTexture, sf::Re
 				
 				iterForVector++;
 			}
+		}
+	}
+
+	for (auto& water : blocksWater)
+	{
+		if (generatedMap[water.coord.x][water.coord.y] == TypeTile::Wall)
+		{
+			castTexture.draw(water.block);
 		}
 	}
 }
@@ -556,169 +492,542 @@ void Map::MoveStoneDown(sf::Vector2f coordOfTile)
 	generatedMap[coordOfTile.x][coordOfTile.y] = TypeTile::Stone;
 }
 
-TypeTile Map::GetTypeWaterByWeight(float weight)
+TwoTypeWater Map::GetTypeWaterInBottomTile(double weightOfCurrentTile, double weightOfBottomTile)
 {
-	if (weight <= 0.05f)
+	TwoTypeWater typesWater;
+	if (weightOfBottomTile >= 1.0f)
 	{
-		return TypeTile::Wall;
+		typesWater.weightCurrentTile = weightOfCurrentTile;
+		typesWater.weightNextTile = weightOfBottomTile;
+		return typesWater;
 	}
-	if (weight > 0.05f && weight < 0.2f)
-	{
-		return TypeTile::Water1;
-	}
-	if (weight >= 0.2f && weight < 0.4f)
-	{
-		return TypeTile::Water3;
-	}
-	if (weight >= 0.4f && weight < 0.6f)
-	{
-		return TypeTile::Water5;
-	}
-	if (weight >= 0.6f && weight < 0.8f)
-	{
-		return TypeTile::Water8;
-	}
-	return TypeTile::Water10;
-}
-
-float Map::GetWeightByTypeWater(TypeTile typeWater)
-{
-	switch (typeWater)
-	{
-	case Wall:
-		return 0.0f;
-	case Stone:
-		return 2.0f;
-	case Water1:
-		return 0.1f;
-	case Water3:
-		return 0.3f;
-	case Water5:
-		return 0.5f;
-	case Water8:
-		return 0.8f;
-	case Water10:
-		return 1.0f;
-	case WaterInStone:
-		return 3.0f;
-	default:
-		break;
-	}
-}
-
-TwoTypeWater Map::GetTypeWaterInBottomTile(TypeTile typeWaterOfCurrentTile, TypeTile typeWaterOfBottomTile)
-{
-	float weightOfCurrentTile = GetWeightByTypeWater(typeWaterOfCurrentTile);
-	float weightOfBottomTile = GetWeightByTypeWater(typeWaterOfBottomTile);
-
-	float dif = weightOfCurrentTile - weightOfBottomTile;
 	
-	float newWeightOfCurrentTile = 0.0f;
-	float newWeightOfBottomTile = 0.0f;
+	double newWeightOfCurrentTile = 0.0f;
+	double newWeightOfBottomTile = 0.0f;
 
-	if (dif > 0.0f)
+	newWeightOfBottomTile = weightOfCurrentTile + weightOfBottomTile;
+
+	if (newWeightOfBottomTile > 1.0f)
 	{
-		newWeightOfCurrentTile = weightOfCurrentTile - dif;
-		newWeightOfBottomTile = weightOfBottomTile + dif;
-
-		std::cout << newWeightOfCurrentTile << " " << newWeightOfBottomTile << std::endl;
+		newWeightOfCurrentTile = newWeightOfBottomTile - 1.0f;
+		newWeightOfBottomTile -= newWeightOfCurrentTile;
 	}
 
-	if (dif <= 0.0f)
+	if (newWeightOfCurrentTile < 0.0f)
 	{
 		newWeightOfCurrentTile = 0.0f;
-		newWeightOfBottomTile = weightOfBottomTile + weightOfCurrentTile;
-		if (newWeightOfBottomTile > 1.0f)
+	}
+
+	if (newWeightOfCurrentTile > 1.0f)
+	{
+		newWeightOfCurrentTile = 1.0f;
+	}
+
+	if (newWeightOfBottomTile < 0.0f)
+	{
+		newWeightOfBottomTile = 0.0f;
+	}
+
+	if (newWeightOfBottomTile > 1.0f)
+	{
+		newWeightOfBottomTile = 1.0f;
+	}
+
+	typesWater.weightCurrentTile = newWeightOfCurrentTile;
+	typesWater.weightNextTile = newWeightOfBottomTile;
+
+	return typesWater;
+}
+
+TwoTypeWater Map::GetTypeWaterInLeftRightTile(double weightOfCurrentTile, double weightOfLeftRightTile)
+{
+	double newWeightOfCurrentTile = weightOfCurrentTile;
+	double newWeightOfLeftRightTile = weightOfLeftRightTile;
+
+	if (weightOfLeftRightTile <= weightOfCurrentTile)
+	{
+		if (weightOfCurrentTile <= 0.1)
 		{
-			dif = 1.0 - newWeightOfBottomTile;
-			newWeightOfCurrentTile = dif;
+			newWeightOfCurrentTile = 0;
+			newWeightOfLeftRightTile = weightOfCurrentTile + weightOfLeftRightTile;
+		}
+		else
+		{
+			double weightForBoth = (weightOfCurrentTile + weightOfLeftRightTile) / 2;
+
+			newWeightOfCurrentTile = weightForBoth;
+			newWeightOfLeftRightTile = weightForBoth;
 		}
 	}
 
+	if (newWeightOfCurrentTile < 0.0f)
+	{
+		newWeightOfCurrentTile = 0.0f;
+	}
+
+	if (newWeightOfCurrentTile > 1.0f)
+	{
+		newWeightOfCurrentTile = 1.0f;
+	}
+
+	if (newWeightOfLeftRightTile < 0.0f)
+	{
+		newWeightOfLeftRightTile = 0.0f;
+	}
+
+	if (newWeightOfLeftRightTile > 1.0f)
+	{
+		newWeightOfLeftRightTile = 1.0f;
+	}
+
 	TwoTypeWater typesWater;
-	typesWater.typeWaterCurrentTile = GetTypeWaterByWeight(newWeightOfCurrentTile);
-	typesWater.typeWaterNextTile = GetTypeWaterByWeight(newWeightOfBottomTile);
+	typesWater.weightCurrentTile = newWeightOfCurrentTile;
+	typesWater.weightNextTile = newWeightOfLeftRightTile;
 
 	return typesWater;
 }
 
-TwoTypeWater Map::GetTypeWaterInLeftRightTile(TypeTile typeWaterOfCurrentTile, TypeTile typeWaterOfLeftRightTile)
+std::vector<BlockWater>::iterator Map::FindBlockWaterInOldVector(sf::Vector2f coordBlock)
 {
-	float weightOfCurrentTile = GetWeightByTypeWater(typeWaterOfCurrentTile);
-	float weightOfLeftRightTile = GetWeightByTypeWater(typeWaterOfLeftRightTile);
-
-	float newWeightOfCurrentTile = weightOfCurrentTile;
-	float newWeightOfLeftRightTile = weightOfLeftRightTile;
-
-	if (weightOfLeftRightTile < weightOfCurrentTile)
+	std::vector<BlockWater>::iterator iterBlockWater = blocksWater.end();
+	for (std::vector<BlockWater>::iterator iter = blocksWater.begin(); iter < blocksWater.end(); iter++)
 	{
-		float weightForBoth = (weightOfCurrentTile + weightOfLeftRightTile) / 2;
-		newWeightOfCurrentTile = weightForBoth;
-		newWeightOfLeftRightTile = weightForBoth;
+		if (iter->coord == coordBlock)
+		{
+			iterBlockWater = iter;
+			break;
+		}
 	}
+	return iterBlockWater;
+}
 
-	TwoTypeWater typesWater;
-	typesWater.typeWaterCurrentTile = GetTypeWaterByWeight(newWeightOfCurrentTile);
-	typesWater.typeWaterNextTile = GetTypeWaterByWeight(newWeightOfLeftRightTile);
-
-	return typesWater;
+std::vector<BlockWater>::iterator Map::FindBlockWaterInNewVector(sf::Vector2f coordBlock)
+{
+	std::vector<BlockWater>::iterator iterBlockWater = newBlocksWater.end();
+	for (std::vector<BlockWater>::iterator iter = newBlocksWater.begin(); iter < newBlocksWater.end(); iter++)
+	{
+		if (iter->coord == coordBlock)
+		{
+			iterBlockWater = iter;
+			break;
+		}
+	}
+	return iterBlockWater;
 }
 
 void Map::WaterDistribution(sf::Vector2f coord)
 {
+	std::vector<BlockWater>::iterator currentWater = FindBlockWaterInOldVector(coord);
+
+	if (currentWater == blocksWater.end()) return;
+
+	double massCurrentWater = currentWater->weight;
+
 	if (generatedMap[coord.x + 1][coord.y] != TypeTile::Stone && generatedMap[coord.x + 1][coord.y] != TypeTile::WaterInStone)
 	{
-		TypeTile typeWaterCurrentTile = TypeTile(generatedMap[coord.x][coord.y]);
-		TypeTile typeWaterBottomTile = TypeTile(generatedMap[coord.x + 1][coord.y]);
+		double weightOfCurrentBlockWater = currentWater->weight;
 
-		TwoTypeWater typesWater = GetTypeWaterInBottomTile(typeWaterCurrentTile, typeWaterBottomTile);
+		sf::Vector2f coordBottomBlock = { coord.x + 1, coord.y };
+		std::vector<BlockWater>::iterator bottomBlockWater = FindBlockWaterInOldVector(coordBottomBlock);
 
-		generatedMap[coord.x][coord.y] = typesWater.typeWaterCurrentTile;
-		generatedMap[coord.x + 1][coord.y] = typesWater.typeWaterNextTile;
+		double weightOfBottomBlockWater = 0;
+		if (bottomBlockWater != blocksWater.end())
+		{
+			weightOfBottomBlockWater = bottomBlockWater->weight;
+		}
+
+		TwoTypeWater typesWater = GetTypeWaterInBottomTile(weightOfCurrentBlockWater, weightOfBottomBlockWater);
+
+		massCurrentWater -= (typesWater.weightNextTile - weightOfBottomBlockWater);
+
+		std::vector<BlockWater>::iterator iterForCurrentBlock = FindBlockWaterInNewVector(coord);
+
+		if (iterForCurrentBlock == newBlocksWater.end())
+		{
+			BlockWater water;
+
+			water.coord = coord;
+			water.weight = typesWater.weightCurrentTile;
+
+			water.block.setFillColor(sf::Color(0, 0, 255, 80));
+			water.block.setSize({ WIDTH_TILE, float(water.weight * HEIGHT_TILE) });
+			water.block.setPosition({ water.coord.y * HEIGHT_TILE,
+				(water.coord.x + 1) * WIDTH_TILE - water.block.getSize().y });
+
+			if (water.weight != 0)
+			{
+				currentWater->block.setSize(water.block.getSize());
+				currentWater->block.setPosition(water.block.getPosition());
+				currentWater->weight = water.weight;
+				currentWater->coord = water.coord;
+
+				newBlocksWater.push_back(water);
+			}
+			else
+			{
+				if (bottomBlockWater == blocksWater.end())
+				{
+					currentWater->weight = typesWater.weightNextTile;
+					currentWater->coord = coordBottomBlock;
+					currentWater->block.setSize({ WIDTH_TILE, float(currentWater->weight * HEIGHT_TILE) });
+					currentWater->block.setPosition({ currentWater->coord.y * HEIGHT_TILE,
+					(currentWater->coord.x + 1) * WIDTH_TILE - currentWater->block.getSize().y });
+				}
+				else
+				{
+					currentWater->block.setSize(water.block.getSize());
+					currentWater->block.setPosition(water.block.getPosition());
+					currentWater->weight = water.weight;
+					currentWater->coord = water.coord;
+				}
+			}
+		}
+		else
+		{
+			iterForCurrentBlock->weight = typesWater.weightCurrentTile;
+			iterForCurrentBlock->coord = coord;
+
+			iterForCurrentBlock->block.setSize({ WIDTH_TILE, float(iterForCurrentBlock->weight * HEIGHT_TILE) });
+			iterForCurrentBlock->block.setPosition({ iterForCurrentBlock->coord.y * HEIGHT_TILE,
+				(iterForCurrentBlock->coord.x + 1) * WIDTH_TILE - iterForCurrentBlock->block.getSize().y });
+
+			currentWater->block.setSize(iterForCurrentBlock->block.getSize());
+			currentWater->block.setPosition(iterForCurrentBlock->block.getPosition());
+			currentWater->weight = iterForCurrentBlock->weight;
+			currentWater->coord = iterForCurrentBlock->coord;
+		}
+
+		std::vector<BlockWater>::iterator iterForBottomBlock = FindBlockWaterInNewVector(coordBottomBlock);
+
+		if (iterForBottomBlock == newBlocksWater.end())
+		{
+			BlockWater bottomWater;
+
+			bottomWater.weight = typesWater.weightNextTile;
+			bottomWater.coord = coordBottomBlock;
+
+			bottomWater.block.setFillColor(sf::Color(0, 0, 255, 80));
+			bottomWater.block.setSize({ WIDTH_TILE, float(bottomWater.weight * HEIGHT_TILE) });
+
+			bottomWater.block.setPosition({ bottomWater.coord.y * HEIGHT_TILE,
+				(bottomWater.coord.x + 1) * WIDTH_TILE - bottomWater.block.getSize().y });
+
+			if (bottomBlockWater != blocksWater.end())
+			{
+				bottomBlockWater->block.setSize(bottomWater.block.getSize());
+				bottomBlockWater->block.setPosition(bottomWater.block.getPosition());
+				bottomBlockWater->weight = bottomWater.weight;
+				bottomBlockWater->coord = bottomWater.coord;
+			}
+
+			if (bottomWater.weight != 0)
+			{
+				newBlocksWater.push_back(bottomWater);
+			}
+		}
+		else
+		{
+			iterForBottomBlock->weight = typesWater.weightNextTile;
+			iterForBottomBlock->block.setSize({ WIDTH_TILE, float(iterForBottomBlock->weight * HEIGHT_TILE) });
+			iterForBottomBlock->coord = coordBottomBlock;
+			iterForBottomBlock->block.setPosition({ iterForBottomBlock->coord.y * HEIGHT_TILE,
+				(iterForBottomBlock->coord.x + 1) * WIDTH_TILE - iterForBottomBlock->block.getSize().y });
+
+			if (bottomBlockWater != blocksWater.end())
+			{
+				bottomBlockWater->block.setSize(iterForBottomBlock->block.getSize());
+				bottomBlockWater->block.setPosition(iterForBottomBlock->block.getPosition());
+				bottomBlockWater->weight = iterForBottomBlock->weight;
+				bottomBlockWater->coord = iterForBottomBlock->coord;
+			}
+		}
+	}
+
+	if (massCurrentWater <= 0)
+	{
+		return;
 	}
 
 	if (generatedMap[coord.x][coord.y + 1] != TypeTile::Stone && generatedMap[coord.x][coord.y + 1] != TypeTile::WaterInStone)
 	{
-		TypeTile typeWaterCurrentTile = TypeTile(generatedMap[coord.x][coord.y]);
-		TypeTile typeWaterRightTile = TypeTile(generatedMap[coord.x][coord.y + 1]);
+		double weightOfCurrentBlockWater = currentWater->weight;
 
-		TwoTypeWater typesWater = GetTypeWaterInLeftRightTile(typeWaterCurrentTile, typeWaterRightTile);
+		sf::Vector2f coordRightBlock = { coord.x, coord.y + 1 };
+		std::vector<BlockWater>::iterator rightBlockWater = FindBlockWaterInOldVector(coordRightBlock);
 
-		generatedMap[coord.x][coord.y] = typesWater.typeWaterCurrentTile;
-		generatedMap[coord.x][coord.y + 1] = typesWater.typeWaterNextTile;
+		double weightOfRightBlockWater = 0;
+		if (rightBlockWater != blocksWater.end())
+		{
+			weightOfRightBlockWater = rightBlockWater->weight;
+		}
+
+		TwoTypeWater typesWater = GetTypeWaterInLeftRightTile(weightOfCurrentBlockWater, weightOfRightBlockWater);
+
+		massCurrentWater -= (typesWater.weightNextTile - weightOfRightBlockWater);
+
+		std::vector<BlockWater>::iterator iterForCurrentBlock = FindBlockWaterInNewVector(coord);
+
+		if (iterForCurrentBlock == newBlocksWater.end())
+		{
+			BlockWater water;
+			water.coord = coord;
+			water.weight = typesWater.weightCurrentTile;
+
+			water.block.setFillColor(sf::Color(0, 0, 255, 80));
+			water.block.setSize({ WIDTH_TILE, float(water.weight * HEIGHT_TILE) });
+
+			water.block.setPosition({ water.coord.y * HEIGHT_TILE,
+				(water.coord.x + 1) * WIDTH_TILE - water.block.getSize().y });
+
+			currentWater->block.setSize(water.block.getSize());
+			currentWater->block.setPosition(water.block.getPosition());
+			currentWater->weight = water.weight;
+			currentWater->coord = water.coord;
+
+			if (water.weight != 0)
+			{
+				newBlocksWater.push_back(water);
+			}
+		}
+		else
+		{
+			iterForCurrentBlock->weight = typesWater.weightCurrentTile;
+			iterForCurrentBlock->block.setSize({ WIDTH_TILE, float(iterForCurrentBlock->weight * HEIGHT_TILE) });
+			iterForCurrentBlock->coord = coord;
+			iterForCurrentBlock->block.setPosition({ iterForCurrentBlock->coord.y * HEIGHT_TILE,
+				(iterForCurrentBlock->coord.x + 1) * WIDTH_TILE - iterForCurrentBlock->block.getSize().y });
+
+			currentWater->block.setSize(iterForCurrentBlock->block.getSize());
+			currentWater->block.setPosition(iterForCurrentBlock->block.getPosition());
+			currentWater->weight = iterForCurrentBlock->weight;
+			currentWater->coord = iterForCurrentBlock->coord;
+		}
+
+		std::vector<BlockWater>::iterator iterForRightBlock = FindBlockWaterInNewVector(coordRightBlock);
+
+		if (iterForRightBlock == newBlocksWater.end())
+		{
+			BlockWater rightWater;
+			rightWater.coord = coordRightBlock;
+			rightWater.weight = typesWater.weightNextTile;
+
+			rightWater.block.setFillColor(sf::Color(0, 0, 255, 80));
+			rightWater.block.setSize({ WIDTH_TILE, float(rightWater.weight * HEIGHT_TILE) });
+
+			rightWater.block.setPosition({ rightWater.coord.y * HEIGHT_TILE,
+				(rightWater.coord.x + 1) * WIDTH_TILE - rightWater.block.getSize().y });
+
+			if (rightBlockWater != blocksWater.end())
+			{
+				rightBlockWater->block.setSize(rightWater.block.getSize());
+				rightBlockWater->block.setPosition(rightWater.block.getPosition());
+				rightBlockWater->weight = rightWater.weight;
+				rightBlockWater->coord = rightWater.coord;
+			}
+			else
+			{
+				BlockWater newRightWaterInOldVector;
+
+				newRightWaterInOldVector.weight = rightWater.weight;
+				newRightWaterInOldVector.coord = rightWater.coord;
+				newRightWaterInOldVector.block.setSize(rightWater.block.getSize());
+				newRightWaterInOldVector.block.setPosition(rightWater.block.getPosition());
+
+				blocksWater.push_back(newRightWaterInOldVector);
+
+				currentWater = FindBlockWaterInOldVector(coord);
+			}
+			
+			if (rightWater.weight != 0)
+			{
+				newBlocksWater.push_back(rightWater);
+			}
+		}
+		else
+		{
+			iterForRightBlock->weight = typesWater.weightNextTile;
+			iterForRightBlock->block.setSize({ WIDTH_TILE, float(iterForRightBlock->weight * HEIGHT_TILE) });
+			iterForRightBlock->coord = coordRightBlock;
+			iterForRightBlock->block.setPosition({ iterForRightBlock->coord.y * HEIGHT_TILE,
+				(iterForRightBlock->coord.x + 1) * WIDTH_TILE - iterForRightBlock->block.getSize().y });
+
+			if (rightBlockWater != blocksWater.end())
+			{
+				rightBlockWater->block.setSize(iterForRightBlock->block.getSize());
+				rightBlockWater->block.setPosition(iterForRightBlock->block.getPosition());
+				rightBlockWater->weight = iterForRightBlock->weight;
+				rightBlockWater->coord = iterForRightBlock->coord;
+			}
+			else
+			{
+				BlockWater newRightWaterInOldVector;
+
+				newRightWaterInOldVector.weight = iterForRightBlock->weight;
+				newRightWaterInOldVector.coord = iterForRightBlock->coord;
+				newRightWaterInOldVector.block.setSize(iterForRightBlock->block.getSize());
+				newRightWaterInOldVector.block.setPosition(iterForRightBlock->block.getPosition());
+
+				blocksWater.push_back(newRightWaterInOldVector);
+
+				currentWater = FindBlockWaterInOldVector(coord);
+			}
+		}
+	}
+
+	if (massCurrentWater <= 0)
+	{
+		return;
 	}
 
 	if (generatedMap[coord.x][coord.y - 1] != TypeTile::Stone && generatedMap[coord.x][coord.y - 1] != TypeTile::WaterInStone)
 	{
-		TypeTile typeWaterCurrentTile = TypeTile(generatedMap[coord.x][coord.y]);
-		TypeTile typeWaterLeftTile = TypeTile(generatedMap[coord.x][coord.y - 1]);
+		double weightOfCurrentBlockWater = 0;
+		weightOfCurrentBlockWater = currentWater->weight;
 
-		TwoTypeWater typesWater = GetTypeWaterInLeftRightTile(typeWaterCurrentTile, typeWaterLeftTile);
+		sf::Vector2f coordLeftBlock = { coord.x, coord.y - 1 };
+		std::vector<BlockWater>::iterator leftBlockWater = FindBlockWaterInOldVector(coordLeftBlock);
 
-		generatedMap[coord.x][coord.y] = typesWater.typeWaterCurrentTile;
-		generatedMap[coord.x][coord.y - 1] = typesWater.typeWaterNextTile;
+		double weightOfLeftBlockWater = 0;
+		if (leftBlockWater != blocksWater.end())
+		{
+			weightOfLeftBlockWater = leftBlockWater->weight;
+		}
+
+		TwoTypeWater typesWater = GetTypeWaterInLeftRightTile(weightOfCurrentBlockWater, weightOfLeftBlockWater);
+
+		massCurrentWater -= (typesWater.weightNextTile - weightOfLeftBlockWater);
+
+		std::vector<BlockWater>::iterator iterForCurrentBlock = FindBlockWaterInNewVector(coord);
+
+		if (iterForCurrentBlock == newBlocksWater.end())
+		{
+			BlockWater water;
+			water.coord = { coord.x, coord.y };
+			water.weight = typesWater.weightCurrentTile;
+
+			water.block.setFillColor(sf::Color(0, 0, 255, 80));
+			water.block.setSize({ WIDTH_TILE, float(water.weight * HEIGHT_TILE) });
+
+			water.block.setPosition({ water.coord.y * HEIGHT_TILE,
+				(water.coord.x + 1) * WIDTH_TILE - water.block.getSize().y });
+
+			currentWater->block.setSize(water.block.getSize());
+			currentWater->block.setPosition(water.block.getPosition());
+			currentWater->weight = water.weight;
+			currentWater->coord = water.coord;
+
+			if (water.weight != 0)
+			{
+				newBlocksWater.push_back(water);
+			}
+		}
+		else
+		{
+			iterForCurrentBlock->weight = typesWater.weightCurrentTile;
+			iterForCurrentBlock->block.setSize({ WIDTH_TILE, float(iterForCurrentBlock->weight * HEIGHT_TILE) });
+			iterForCurrentBlock->coord = { coord.x, coord.y };
+			iterForCurrentBlock->block.setPosition({ iterForCurrentBlock->coord.y * HEIGHT_TILE,
+				(iterForCurrentBlock->coord.x + 1) * WIDTH_TILE - iterForCurrentBlock->block.getSize().y });
+
+
+			currentWater->block.setSize(iterForCurrentBlock->block.getSize());
+			currentWater->block.setPosition(iterForCurrentBlock->block.getPosition());
+			currentWater->weight = iterForCurrentBlock->weight;
+			currentWater->coord = iterForCurrentBlock->coord;
+		}
+
+		std::vector<BlockWater>::iterator iterForLeftBlock = FindBlockWaterInNewVector(coordLeftBlock);
+
+		if (iterForLeftBlock == newBlocksWater.end())
+		{
+			BlockWater leftWater;
+			leftWater.coord = { coord.x, coord.y - 1 };;
+			leftWater.weight = typesWater.weightNextTile;
+
+			leftWater.block.setFillColor(sf::Color(0, 0, 255, 80));
+			leftWater.block.setSize({ WIDTH_TILE, float(leftWater.weight * HEIGHT_TILE) });
+
+			leftWater.block.setPosition({ leftWater.coord.y * HEIGHT_TILE,
+				(leftWater.coord.x + 1) * WIDTH_TILE - leftWater.block.getSize().y });
+
+			if (leftBlockWater != blocksWater.end())
+			{
+				leftBlockWater->block.setSize(leftWater.block.getSize());
+				leftBlockWater->block.setPosition(leftWater.block.getPosition());
+				leftBlockWater->weight = leftWater.weight;
+				leftBlockWater->coord = leftWater.coord;
+			}
+
+			if (leftWater.weight != 0)
+			{
+				newBlocksWater.push_back(leftWater);
+			}
+		}
+		else
+		{
+			iterForLeftBlock->weight = typesWater.weightNextTile;
+			iterForLeftBlock->block.setSize({ WIDTH_TILE, float(iterForLeftBlock->weight * HEIGHT_TILE) });
+			iterForLeftBlock->coord = { coord.x, coord.y - 1 };
+			iterForLeftBlock->block.setPosition({ iterForLeftBlock->coord.y * HEIGHT_TILE,
+				(iterForLeftBlock->coord.x + 1) * WIDTH_TILE - iterForLeftBlock->block.getSize().y });
+
+			if (leftBlockWater != blocksWater.end())
+			{
+				leftBlockWater->block.setSize(iterForLeftBlock->block.getSize());
+				leftBlockWater->block.setPosition(iterForLeftBlock->block.getPosition());
+				leftBlockWater->weight = iterForLeftBlock->weight;
+				leftBlockWater->coord = iterForLeftBlock->coord;
+			}
+		}
+	}
+
+	if (massCurrentWater <= 0)
+	{
+		return;
+	}
+
+	std::vector<BlockWater>::iterator currentIterInNewVector = FindBlockWaterInNewVector(currentWater->coord);
+
+	if (currentIterInNewVector == newBlocksWater.end())
+	{
+		if (currentWater->weight != 0)
+		{
+			newBlocksWater.push_back({ currentWater->weight, currentWater->block, currentWater->coord });
+		}
 	}
 }
 
 void Map::MoveWater()
 {
-	if (timerForWater.getElapsedTime().asSeconds() < 1) return;
+	if (timerForWater.getElapsedTime().asSeconds() < 0.1) return;
 
 	for (int iterY = 0; iterY < HEIGHT_MAP; iterY++)
 	{
 		for (int iterX = WIDTH_MAP - 1; iterX >= 0; iterX--)
 		{
-			if (generatedMap[iterX][iterY] == TypeTile::Water10 || 
-				generatedMap[iterX][iterY] == TypeTile::Water8  ||
-				generatedMap[iterX][iterY] == TypeTile::Water5  ||
-				generatedMap[iterX][iterY] == TypeTile::Water3  ||
-				generatedMap[iterX][iterY] == TypeTile::Water1)
+			if (generatedMap[iterX][iterY] == TypeTile::Wall)
 			{
 				sf::Vector2f coord = { float(iterX), float(iterY) };
 				WaterDistribution(coord);
 			}
 		}
 	}
+
+	blocksWater.clear();
+
+	double weightWaterInNewVector = 0.0;
+
+	for (auto& waterInBlock : newBlocksWater)
+	{
+		if (waterInBlock.weight != 0)
+		{
+			weightWaterInNewVector += waterInBlock.weight;
+			blocksWater.push_back(waterInBlock);
+		}
+	}
+
+	newBlocksWater.clear();
+	iterationOfMoveWater++;
 	
 	timerForWater.restart();
 }

@@ -5,7 +5,7 @@
 const int WIDTH_MAP = 154;
 const int HEIGHT_MAP = 200;
 
-const int RADIUS_WATER = 6;
+const int RADIUS_WATER = 5;
 
 enum TypeOfMovementWater
 {
@@ -29,8 +29,8 @@ struct ParamsForTile
 
 struct TwoTypeWater
 {
-	TypeTile typeWaterCurrentTile;
-	TypeTile typeWaterNextTile;
+	double weightCurrentTile;
+	double weightNextTile;
 };
 
 class Map
@@ -63,11 +63,11 @@ private:
 	void SpreadWater(sf::Vector2f centralBlock);
 	void FillWaterFromCell(sf::Vector2f centralBlock, int radius);
 	void GenerateRandomWater();
-	TwoTypeWater GetTypeWaterInBottomTile(TypeTile typeWaterOfCurrentTile, TypeTile typeWaterOfBottomTile);
-	TwoTypeWater GetTypeWaterInLeftRightTile(TypeTile typeWaterOfCurrentTile, TypeTile typeWaterOfLeftRightTile);
+	TwoTypeWater GetTypeWaterInBottomTile(double weightOfCurrentTile, double weightOfBottomTile);
+	TwoTypeWater GetTypeWaterInLeftRightTile(double weightOfCurrentTile, double weightOfLeftRightTile);
 	void WaterDistribution(sf::Vector2f coord);
-	TypeTile GetTypeWaterByWeight(float weight);
-	float GetWeightByTypeWater(TypeTile typeWater);
+	std::vector<BlockWater>::iterator FindBlockWaterInOldVector(sf::Vector2f coordBlock);
+	std::vector<BlockWater>::iterator FindBlockWaterInNewVector(sf::Vector2f coordBlock);
 
 	void CreateTileForMap();
 
@@ -79,11 +79,6 @@ private:
 	void SetParamsForStone(ParamsForTile params);
 	void SetParamsForWall(ParamsForTile params);
 	void SetParamsForWaterStone(ParamsForTile params);
-	void SetParamsForWater10(ParamsForTile params);
-	void SetParamsForWater8(ParamsForTile params);
-	void SetParamsForWater5(ParamsForTile params);
-	void SetParamsForWater3(ParamsForTile params);
-	void SetParamsForWater1(ParamsForTile params);
 
 	int Random(int min, int max);
 
@@ -97,7 +92,11 @@ private:
 	sf::Texture textureOfCave;
 
 	std::vector<Tile*> mapOfTexture;
-	std::vector<std::pair<TypeTile, sf::Vector2f>> coordsOfBlockWater;
+	std::vector<BlockWater> blocksWater;
+	std::vector<BlockWater> newBlocksWater;
+	int iterationOfMoveWater = 0;
+
+	double weightAllWater = 0.0f;
 
 	sf::Clock timerForWater;
 	bool isLeftDirection = false;
