@@ -1,6 +1,7 @@
 ﻿#include "Camera.h"
 #include "ShadowLight.h"
 #include "Disaster.h"
+#include "StartLobby.h"
 
 void redrawFrame(sf::RenderWindow& window, Map* map, Camera* camera, const sf::Shader& shadowShader, const sf::VertexArray& blocks)
 {
@@ -9,8 +10,6 @@ void redrawFrame(sf::RenderWindow& window, Map* map, Camera* camera, const sf::S
     camera->DrawRenderTexture(window, shadowShader);
 
     window.display();
-    camera->castTexture.display();
-    camera->castTextureForWater.display();
     camera->renderTextureForLight.display();
 }
 
@@ -30,12 +29,10 @@ void MakeLight(Light& light, Map* map, sf::Vector2f playerCoord, bool& isFirstTi
     light.res.clear();
     light.vertecies.clear();
     light.blocks.clear();
-
-    int radius = 3;
     
     sf::Vector2f tilePlayerCoord = { floor(playerCoord.x / 25), floor(playerCoord.y / 25) };
 
-    map->SpreadTheLight(tilePlayerCoord, radius, isFirstTimeOfSpreadLight);
+    map->SpreadTheLight(tilePlayerCoord, isFirstTimeOfSpreadLight);
     isFirstTimeOfSpreadLight = false;
 
     light.vec = light.light->MakeCircle(map->GetMapOfLightInBool());
@@ -53,6 +50,8 @@ void MakeLight(Light& light, Map* map, sf::Vector2f playerCoord, bool& isFirstTi
 
 int main()
 {
+    setlocale(LC_ALL, "Russian");
+
     Light light;
     sf::Shader shadowShader;
 
@@ -63,9 +62,14 @@ int main()
 
     sf::Texture textureOfCave;
     textureOfCave.loadFromFile("../assets/textureForCave.png");
+    sf::Texture textureOfTeam;
+    textureOfTeam.loadFromFile("../assets/hole.png");
 
-    Map* map = new Map(camera->GetView(), camera->castTexture, textureOfCave, camera->castTextureForWater);
-    Player* player = new Player(map);
+    StartLobby start;
+    EndGame* end = new EndGame();
+
+    Map* map = new Map(camera->GetView(), camera->castTexture, textureOfCave, textureOfTeam);
+    Player* player = new Player(map, end, camera->GetViewPosition(), camera->castTexture);
 
     sf::Vector2f mouseCoords = { 0, 0 };
     bool isMouseMove = false;
@@ -81,15 +85,30 @@ int main()
 
     while (camera->m_window.isOpen())
     {
+        /*if (!start.GetStateDialogue())
+        {
+            start.DrawDialouge(camera->m_window);
+            continue;
+        }*/
+
+        /*if (end->GetStateDialogue())
+        {
+            end->DrawDialouge(camera->m_window);
+            continue;
+        }*/
+
         //disasters->MakeRandomDisaster(player->GetPosition(), player->GetDirectionOfMovement());
         float deltaTimeForMovement = clock.restart().asSeconds();
 
         camera->Update(mouseCoords, isMouseMove, disasters);
+        camera->SetPlayerCoordsBeforeMove(player->GetPosition());
         map->MoveWater();
 
-        map->UpdateMap(camera->GetView(), camera->castTexture, camera->castTextureForWater);
+        map->UpdateMap(camera->GetView(), camera->castTexture);
 
         player->Update(camera->castTexture, camera->GetView(), deltaTimeForMovement);
+        camera->SetPlayerCoordsAfterMove(player->GetPosition());
+        camera->UpdatePostionCamera();
 
         MakeLight(light, map, player->GetPosition(), isFirstTimeOfSpreadLight);
 

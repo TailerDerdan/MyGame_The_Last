@@ -113,12 +113,12 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Users\Anton\Programming_in_C++\glfw-3.4.bin.WIN64\include;C:\Users\Anton\Programming_in_C++\SFML-2.6.1\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Anton\Programming_in_C++\glfw-3.4.bin.WIN64\include;$(SolutionDir)SFML-2.6.1\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Users\Anton\Programming_in_C++\glfw-3.4.bin.WIN64\lib-vc2022;C:\Users\Anton\Programming_in_C++\SFML-2.6.1\lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Users\Anton\Programming_in_C++\glfw-3.4.bin.WIN64\lib-vc2022;$(SolutionDir)SFML-2.6.1\lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>opengl32.lib;openal32.lib;glfw3.lib;user32.lib;gdi32.lib;shell32.lib;sfml-graphics-d.lib;sfml-window-d.lib;sfml-system-d.lib;sfml-audio-d.lib;sfml-network-d.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -131,32 +131,36 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Users\Anton\Programming_in_C++\glfw-3.4.bin.WIN64\include;C:\Users\Anton\Programming_in_C++\SFML-2.6.1\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Anton\Programming_in_C++\glfw-3.4.bin.WIN64\include;$(SolutionDir)SFML-2.6.1\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Users\Anton\Programming_in_C++\glfw-3.4.bin.WIN64\lib-vc2022;C:\Users\Anton\Programming_in_C++\SFML-2.6.1\lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Users\Anton\Programming_in_C++\glfw-3.4.bin.WIN64\lib-vc2022;$(SolutionDir)SFML-2.6.1\lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>opengl32.lib;openal32.lib;glfw3.lib;user32.lib;gdi32.lib;shell32.lib;sfml-graphics.lib;sfml-window.lib;sfml-system.lib;sfml-audio.lib;sfml-network.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Disaster.cpp" />
+    <ClCompile Include="EndGame.cpp" />
     <ClCompile Include="Map.cpp" />
     <ClCompile Include="MyGame_The_Lost.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="ShadowLight.cpp" />
+    <ClCompile Include="StartLobby.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Disaster.h" />
+    <ClInclude Include="EndGame.h" />
     <ClInclude Include="includes.h" />
     <ClInclude Include="Map.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="ShadowLight.h" />
+    <ClInclude Include="StartLobby.h" />
     <ClInclude Include="Tile.h" />
   </ItemGroup>
   <ItemGroup>

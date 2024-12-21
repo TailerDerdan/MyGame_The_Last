@@ -160,7 +160,7 @@ void Disaster::CheckStoneAroundFallingStone(sf::Vector2i coordOfStone)
 {
 	if (coordOfStone.x * HEIGHT_MAP + coordOfStone.y + 1 < WIDTH_MAP * HEIGHT_MAP &&
 		std::find(stones.begin(), stones.end(), std::pair(sf::Vector2i{coordOfStone.x, coordOfStone.y + 1}, false)) == stones.end() &&
-		m_map->GetTypeOfTile(coordOfStone.x * HEIGHT_MAP + coordOfStone.y + 1) == TypeTile::Stone)
+		m_map->GetTypeOfTile(coordOfStone.x * HEIGHT_MAP + coordOfStone.y + 1) != TypeTile::Wall)
 	{
 		countOfFallingStone++;
 		stones.push_back(std::pair(sf::Vector2i{coordOfStone.x, coordOfStone.y + 1}, false));
@@ -169,7 +169,7 @@ void Disaster::CheckStoneAroundFallingStone(sf::Vector2i coordOfStone)
 
 	if (coordOfStone.x * HEIGHT_MAP + coordOfStone.y - 1 > 0 &&
 		std::find(stones.begin(), stones.end(), std::pair(sf::Vector2i{coordOfStone.x, coordOfStone.y - 1}, false)) == stones.end() &&
-		m_map->GetTypeOfTile(coordOfStone.x * HEIGHT_MAP + coordOfStone.y - 1) == TypeTile::Stone)
+		m_map->GetTypeOfTile(coordOfStone.x * HEIGHT_MAP + coordOfStone.y - 1) != TypeTile::Wall)
 	{
 		countOfFallingStone++;
 		stones.push_back(std::pair(sf::Vector2i{coordOfStone.x, coordOfStone.y - 1}, false));
@@ -178,7 +178,7 @@ void Disaster::CheckStoneAroundFallingStone(sf::Vector2i coordOfStone)
 
 	if ((coordOfStone.x + 1) * HEIGHT_MAP + coordOfStone.y < WIDTH_MAP * HEIGHT_MAP &&
 		std::find(stones.begin(), stones.end(), std::pair(sf::Vector2i{coordOfStone.x + 1, coordOfStone.y}, false)) == stones.end() &&
-		m_map->GetTypeOfTile((coordOfStone.x + 1) * HEIGHT_MAP + coordOfStone.y) == TypeTile::Stone)
+		m_map->GetTypeOfTile((coordOfStone.x + 1) * HEIGHT_MAP + coordOfStone.y) != TypeTile::Wall)
 	{
 		countOfFallingStone++;
 		stones.push_back(std::pair(sf::Vector2i{coordOfStone.x + 1, coordOfStone.y}, false));

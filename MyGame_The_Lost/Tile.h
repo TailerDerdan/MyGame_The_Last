@@ -9,6 +9,8 @@ enum TypeTile
 	Wall,
 	Stone,
 	WaterInStone,
+	Coal,
+	WaterInCoal,
 };
 
 struct Tile 

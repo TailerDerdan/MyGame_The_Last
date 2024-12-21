@@ -1,6 +1,6 @@
 #include "Player.h"
 
-Player::Player(Map* map)
+Player::Player(Map* map, EndGame* end, sf::Vector2f viewPosition, sf::RenderTexture& castTexture)
 {
 	textureMovingRight.loadFromFile("../assets/movingRight.png");
 	textureMovingLeft.loadFromFile("../assets/movingLeft.png");
@@ -14,7 +14,20 @@ Player::Player(Map* map)
 	SetIntRectsForMoving();
 	SetIntRectForDigging();
 
+	MakeRectsOfStates(viewPosition);
+
+	castTexture.draw(rectForHp);
+	castTexture.draw(rectForOxygen);
+	castTexture.draw(rectForWater);
+
+	castTexture.draw(wrapperRectForHp);
+	castTexture.draw(wrapperRectForOxygen);
+	castTexture.draw(wrapperRectForWater);
+
+	timerForUpdateStatePlayer.restart();
+
 	m_map = map;
+	m_end = end;
 }
 
 void Player::SetIntRectsForMoving()
@@ -273,7 +286,7 @@ float Player::GetModuleVector(const sf::Vector2f& vect)
 	return std::sqrt(vect.x * vect.x + vect.y * vect.y);
 }
 
-void Player::PlayerMoveToRightSide(float deltaTimeForMovement)
+void Player::PlayerMoveToRightSide(float deltaTimeForMovement, StatePlayerInWater statePlayerForWater)
 {
 	isPlayerMovementToRight = true;
 
@@ -290,6 +303,12 @@ void Player::PlayerMoveToRightSide(float deltaTimeForMovement)
 	float deltaTime = 0.016;
 	float movementOffset = SPEED_PLAYER * deltaTime;
 
+	if (statePlayerForWater.playerInWaterBottomLeft || statePlayerForWater.playerInWaterBottomRight ||
+		statePlayerForWater.playerInWaterTopLeft || statePlayerForWater.playerInWaterTopRight)
+	{
+		movementOffset = SPEED_PLAYER_FOR_WATER * deltaTime;
+	}
+
 	sf::Vector2f newDirection = { direction.x * movementOffset, direction.y * movementOffset };
 
 	if (std::abs(endPoint.x - positionPlayer.x) <= 1 || !CanPlayerPass(positionPlayer + newDirection, SideForChechiking::Right))
@@ -303,7 +322,7 @@ void Player::PlayerMoveToRightSide(float deltaTimeForMovement)
 	ApplyToSpriteMovementRight();
 }
 
-void Player::PlayerMoveToLeftSide(float deltaTimeForMovement)
+void Player::PlayerMoveToLeftSide(float deltaTimeForMovement, StatePlayerInWater statePlayerForWater)
 {
 	isPlayerMovementToRight = false;
 
@@ -320,6 +339,12 @@ void Player::PlayerMoveToLeftSide(float deltaTimeForMovement)
 	float deltaTime = 0.016;
 	float movementOffset = SPEED_PLAYER * deltaTime;
 
+	if (statePlayerForWater.playerInWaterBottomLeft || statePlayerForWater.playerInWaterBottomRight ||
+		statePlayerForWater.playerInWaterTopLeft || statePlayerForWater.playerInWaterTopRight)
+	{
+		movementOffset = SPEED_PLAYER_FOR_WATER * deltaTime;
+	}
+
 	sf::Vector2f newDirection = { direction.x * movementOffset, direction.y * movementOffset };
 
 	if (std::abs(endPoint.x - positionPlayer.x) <= 1 || !CanPlayerPass(positionPlayer + newDirection, SideForChechiking::Left))
@@ -332,7 +357,7 @@ void Player::PlayerMoveToLeftSide(float deltaTimeForMovement)
 	ApplyToSpriteMovementLeft();
 }
 
-void Player::PlayerMoveToBottomSide()
+void Player::PlayerMoveToBottomSide(StatePlayerInWater statePlayerForWater)
 {
 	sf::Vector2f positionPlayer = player.getPosition();
 	sf::Vector2f endPoint = { positionPlayer.x, HEIGHT_TILE * WIDTH_MAP + 1 };
@@ -343,6 +368,12 @@ void Player::PlayerMoveToBottomSide()
 
 	float deltaTime = 0.016;
 	float movementOffset = SPEED_PLAYER_FOR_FALL * deltaTime;
+
+	if (statePlayerForWater.playerInWaterBottomLeft || statePlayerForWater.playerInWaterBottomRight ||
+		statePlayerForWater.playerInWaterTopLeft || statePlayerForWater.playerInWaterTopRight)
+	{
+		movementOffset = SPEED_PLAYER_FOR_WATER_FOR_FALL * deltaTime;
+	}
 
 	sf::Vector2f newDirection = { direction.x * movementOffset, direction.y * movementOffset };
 
@@ -356,7 +387,7 @@ void Player::PlayerMoveToBottomSide()
 	player.setPosition(positionPlayer + newDirection);
 }
 
-void Player::PlayerMoveToTopSide()
+void Player::PlayerMoveToTopSide(StatePlayerInWater statePlayerForWater)
 {
 	sf::Vector2f positionPlayer = player.getPosition();
 	sf::Vector2f endPoint = { positionPlayer.x, positionPlayer.y - PLAYER_HEIGHT * 1.5f };
@@ -367,6 +398,12 @@ void Player::PlayerMoveToTopSide()
 
 	float deltaTime = 0.016;
 	float movementOffset = SPEED_PLAYER * deltaTime;
+
+	if (statePlayerForWater.playerInWaterBottomLeft || statePlayerForWater.playerInWaterBottomRight || 
+		statePlayerForWater.playerInWaterTopLeft || statePlayerForWater.playerInWaterTopRight)
+	{
+		movementOffset = SPEED_PLAYER_FOR_WATER * deltaTime;
+	}
 
 	sf::Vector2f newDirection = { direction.x * movementOffset, direction.y * movementOffset };
 
@@ -406,26 +443,38 @@ void Player::PlayerDig(sf::Vector2f viewPosition)
 
 void Player::Update(sf::RenderTexture& castTexture, const sf::View& view, float deltaTimeForMovement)
 {
+	statePlayerInWater.playerInWaterBottomRight = m_map->CoordInWater({ player.getPosition().x + player.getLocalBounds().width,
+		player.getPosition().y + player.getLocalBounds().height });
+	statePlayerInWater.playerInWaterBottomLeft = m_map->CoordInWater({ player.getPosition().x, player.getPosition().y + player.getLocalBounds().height });
+
+	statePlayerInWater.playerInWaterTopLeft = m_map->CoordInWater(player.getPosition());
+	statePlayerInWater.playerInWaterTopRight = m_map->CoordInWater({ player.getPosition().x + player.getLocalBounds().width, player.getPosition().y });
+
 	if (!m_movement.isTop)
 	{
-		PlayerMoveToBottomSide();
+		PlayerMoveToBottomSide(statePlayerInWater);
 	}
 	if (m_movement.isRight)
 	{
-		PlayerMoveToRightSide(deltaTimeForMovement);
+		PlayerMoveToRightSide(deltaTimeForMovement, statePlayerInWater);
 	}
 	if (m_movement.isLeft)
 	{
-		PlayerMoveToLeftSide(deltaTimeForMovement);
+		PlayerMoveToLeftSide(deltaTimeForMovement, statePlayerInWater);
 	}
 	if (!m_movement.isBottom)
 	{
-		PlayerMoveToTopSide();
+		PlayerMoveToTopSide(statePlayerInWater);
 	}
 	if (m_digging.isDig)
 	{
 		PlayerDig(view.getCenter() - view.getSize() / 2.0f);
 	}
+	if (m_map->DidPlayerFindTeam(player.getPosition()))
+	{
+		m_end->ChangeStateDialogue();
+	}
+	UpdateRectsOfStates(view.getCenter() - view.getSize() / 2.0f, castTexture);
 	castTexture.draw(player);
 }
 
@@ -480,4 +529,113 @@ void Player::UpdateFramesMovementLeft(float deltaTime)
 bool Player::GetDirectionOfMovement()
 {
 	return isPlayerMovementToRight;
+}
+
+void Player::MakeRectsOfStates(sf::Vector2f viewPosition)
+{
+	rectForHp.setFillColor(sf::Color(198, 7, 14));
+	rectForHp.setSize({ hp, HEIGHT_RECT_STATE_PLAYER });
+	rectForHp.setPosition({ viewPosition.x + 20, viewPosition.y + Y_INDENT_FOR_RECT });
+
+	wrapperRectForHp.setFillColor(sf::Color(0, 0, 0, 0));
+	wrapperRectForHp.setOutlineColor(sf::Color(195, 195, 195));
+	wrapperRectForHp.setOutlineThickness(THICKNESS_FOR_RECT);
+	wrapperRectForHp.setSize({ MAX_HP, HEIGHT_RECT_STATE_PLAYER });
+	wrapperRectForHp.setPosition(rectForHp.getPosition());
+
+	rectForWater.setFillColor(sf::Color(43, 30, 106));
+	rectForWater.setSize({ waterLevel, HEIGHT_RECT_STATE_PLAYER });
+	rectForWater.setPosition({ viewPosition.x + 20, viewPosition.y + Y_INDENT_FOR_RECT + HEIGHT_RECT_STATE_PLAYER + Y_INDENT_FOR_RECT });
+
+	wrapperRectForWater.setFillColor(sf::Color(0, 0, 0, 0));
+	wrapperRectForWater.setOutlineColor(sf::Color(195, 195, 195));
+	wrapperRectForWater.setOutlineThickness(THICKNESS_FOR_RECT);
+	wrapperRectForWater.setSize({ MAX_WATER_LEVEL, HEIGHT_RECT_STATE_PLAYER });
+	wrapperRectForWater.setPosition(rectForWater.getPosition());
+
+	rectForOxygen.setFillColor(sf::Color(44, 134, 179));
+	rectForOxygen.setSize({ oxygenLevel, HEIGHT_RECT_STATE_PLAYER });
+	rectForOxygen.setPosition({ viewPosition.x + 20, viewPosition.y + Y_INDENT_FOR_RECT + HEIGHT_RECT_STATE_PLAYER + Y_INDENT_FOR_RECT
+		+ HEIGHT_RECT_STATE_PLAYER + Y_INDENT_FOR_RECT });
+
+	wrapperRectForOxygen.setFillColor(sf::Color(0, 0, 0, 0));
+	wrapperRectForOxygen.setOutlineColor(sf::Color(195, 195, 195));
+	wrapperRectForOxygen.setOutlineThickness(THICKNESS_FOR_RECT);
+	wrapperRectForOxygen.setSize({ MAX_OXYGEN_LEVEL, HEIGHT_RECT_STATE_PLAYER });
+	wrapperRectForOxygen.setPosition(rectForOxygen.getPosition());
+}
+
+void Player::UpdateRectsOfStates(sf::Vector2f viewPosition, sf::RenderTexture& castTexture)
+{
+	rectForHp.setPosition({ viewPosition.x + 20, viewPosition.y + Y_INDENT_FOR_RECT });
+	rectForWater.setPosition({ viewPosition.x + 20, viewPosition.y + Y_INDENT_FOR_RECT + HEIGHT_RECT_STATE_PLAYER + Y_INDENT_FOR_RECT });
+	rectForOxygen.setPosition({ viewPosition.x + 20, viewPosition.y + Y_INDENT_FOR_RECT + HEIGHT_RECT_STATE_PLAYER + Y_INDENT_FOR_RECT
+		+ HEIGHT_RECT_STATE_PLAYER + Y_INDENT_FOR_RECT });
+
+	wrapperRectForHp.setPosition(rectForHp.getPosition());
+	wrapperRectForWater.setPosition(rectForWater.getPosition());
+	wrapperRectForOxygen.setPosition(rectForOxygen.getPosition());
+
+	castTexture.draw(rectForHp);
+	castTexture.draw(rectForOxygen);
+	castTexture.draw(rectForWater);
+
+	castTexture.draw(wrapperRectForHp);
+	castTexture.draw(wrapperRectForOxygen);
+	castTexture.draw(wrapperRectForWater);
+
+	if (timerForUpdateStatePlayer.getElapsedTime().asSeconds() <= 0.8f) return;
+
+	if (statePlayerInWater.playerInWaterTopLeft || statePlayerInWater.playerInWaterTopRight)
+	{
+		if (oxygenLevel > MIN_OXYGEN_LEVEL)
+		{
+			oxygenLevel -= 2.5f;
+		}
+	}
+	else
+	{
+		if (oxygenLevel < MAX_OXYGEN_LEVEL)
+		{
+			oxygenLevel += 5.f;
+		}
+	}
+
+	if (statePlayerInWater.playerInWaterTopLeft || statePlayerInWater.playerInWaterTopRight ||
+		statePlayerInWater.playerInWaterBottomLeft || statePlayerInWater.playerInWaterBottomRight)
+	{
+		if (waterLevel < MAX_WATER_LEVEL)
+		{
+			waterLevel += 3.0f;
+		}
+	}
+	else
+	{
+		if (waterLevel > MIN_WATER_LEVEL)
+		{
+			waterLevel -= 0.1f;
+		}
+	}
+
+	if (oxygenLevel == MIN_OXYGEN_LEVEL)
+	{
+		if (hp > MIN_HP)
+		{
+			hp -= 2.5f;
+		}
+	}
+
+	if (waterLevel == MIN_WATER_LEVEL)
+	{
+		if (hp > MIN_HP)
+		{
+			hp -= 0.3f;
+		}
+	}
+
+	rectForHp.setSize({ hp, HEIGHT_RECT_STATE_PLAYER });
+	rectForWater.setSize({ waterLevel, HEIGHT_RECT_STATE_PLAYER });
+	rectForOxygen.setSize({ oxygenLevel, HEIGHT_RECT_STATE_PLAYER });
+
+	timerForUpdateStatePlayer.restart();
 }

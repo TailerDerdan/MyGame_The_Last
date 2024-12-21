@@ -15,34 +15,30 @@ Camera::Camera()
 	castTexture.create(WINDOW_WIDTH, WINDOW_HEIGHT);
 	castTexture.setSmooth(true);
 
-	/*castTextureForWater.create(WINDOW_WIDTH, WINDOW_HEIGHT);
-	castTextureForWater.setSmooth(true);*/
-
 	m_player = nullptr;
 
 	viewPosition = m_view.getCenter() - m_view.getSize() / 2.0f;
 }
 
-void Camera::KeyCameraHandler()
+void Camera::UpdatePostionCamera()
 {
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::I) && viewPosition.y > 0)
-	{
-		m_view.move(0, -SPEED_CAMERA);
-	}
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::J) && viewPosition.x > 0)
-	{
-		m_view.move(-SPEED_CAMERA, 0);
-	}
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::K) && viewPosition.y < WINDOW_HEIGHT)
-	{
-		m_view.move(0, SPEED_CAMERA);
-	}
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::L) && viewPosition.x < WINDOW_WIDTH)
-	{
-		m_view.move(SPEED_CAMERA, 0);
-	}
+	sf::Vector2f deltaMove = { positionPlayerAfterMove.x - positionPlayerBeforeMove.x, positionPlayerAfterMove.y - positionPlayerBeforeMove.y };
+	
+	m_view.move(deltaMove.x, deltaMove.y);
+	m_view.setCenter(m_player->GetPosition());
+	m_window.setView(m_view);
 
 	viewPosition = m_view.getCenter() - m_view.getSize() / 2.0f;
+}
+
+void Camera::SetPlayerCoordsBeforeMove(sf::Vector2f coord)
+{
+	positionPlayerBeforeMove = coord;
+}
+
+void Camera::SetPlayerCoordsAfterMove(sf::Vector2f coord)
+{
+	positionPlayerAfterMove = coord;
 }
 
 void Camera::PlayerHandler()
@@ -82,7 +78,6 @@ void Camera::OnMouseMoved(const sf::Event::MouseMoveEvent& event, sf::Vector2f& 
 void Camera::EventHandler(sf::Event& event, sf::Vector2f& mouseCoords, bool& isMouseMove, Disaster* disasters)
 {
 	PlayerHandler();
-	KeyCameraHandler();
 
 	switch (event.type)
 	{
@@ -126,9 +121,6 @@ void Camera::Update(sf::Vector2f& mouseCoords, bool& isMouseMove, Disaster* disa
 	castTexture.setView(m_view);
 	castTexture.clear();
 
-	castTextureForWater.setView(m_view);
-	castTextureForWater.clear();
-
 	renderTextureForLight.setView(m_view);
 	renderTextureForLight.clear();
 
@@ -142,13 +134,13 @@ void Camera::Update(sf::Vector2f& mouseCoords, bool& isMouseMove, Disaster* disa
 void Camera::DrawRenderTexture(sf::RenderWindow& window, const sf::Shader& shadowShader)
 {
 	window.draw(sf::Sprite(castTexture.getTexture()));
-	//window.draw(sf::Sprite(castTextureForWater.getTexture()));
 	//window.draw(sf::Sprite(renderTextureForLight.getTexture()), &shadowShader);
 }
 
 void Camera::SetPlayer(Player* player)
 {
 	m_player = player;
+	m_view.setCenter(m_player->GetPosition());
 }
 
 sf::View Camera::GetView()

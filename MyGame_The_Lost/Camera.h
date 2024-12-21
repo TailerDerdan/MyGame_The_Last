@@ -12,7 +12,6 @@ public:
 
 	sf::RenderTexture castTexture;
 	sf::RenderTexture renderTextureForLight;
-	sf::RenderTexture castTextureForWater;
 
 	Camera();
 
@@ -20,6 +19,10 @@ public:
 	sf::Vector2f GetViewPosition();
 
 	void DrawRenderTexture(sf::RenderWindow& window, const sf::Shader& shadowShader);
+
+	void SetPlayerCoordsBeforeMove(sf::Vector2f coord);
+	void SetPlayerCoordsAfterMove(sf::Vector2f coord);
+	void UpdatePostionCamera();
 
 	void SetPlayer(Player* player);
 	sf::View GetView();
@@ -29,15 +32,15 @@ private:
 	void OnMouseMoved(const sf::Event::MouseMoveEvent& event, sf::Vector2f& mousePosition);
 	void EventHandler(sf::Event& event, sf::Vector2f& mouseCoords, bool& isMouseMove, Disaster* disasters);
 
-	void KeyCameraHandler();
 	void PlayerHandler();
-
-	float RandomAngleForShake();
 
 private:
 	sf::View m_view;
 
 	sf::Vector2f viewPosition;
+
+	sf::Vector2f positionPlayerBeforeMove;
+	sf::Vector2f positionPlayerAfterMove;
 
 	Player* m_player;
 };
