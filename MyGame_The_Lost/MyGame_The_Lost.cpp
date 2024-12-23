@@ -2,15 +2,18 @@
 #include "ShadowLight.h"
 #include "Disaster.h"
 #include "StartLobby.h"
+#include "Erosion.h"
 
-void redrawFrame(sf::RenderWindow& window, Map* map, Camera* camera, const sf::Shader& shadowShader, const sf::VertexArray& blocks)
+void redrawFrame(sf::RenderWindow& window, Map* map, Camera* camera, const sf::Shader& shadowShader, const sf::VertexArray& blocks, const sf::Shader& corosionShader)
 {
     window.clear(sf::Color(0, 0, 0));
 
-    camera->DrawRenderTexture(window, shadowShader);
+    camera->DrawRenderTexture(window, shadowShader, corosionShader);
 
     window.display();
+    camera->castTexture.display();
     camera->renderTextureForLight.display();
+    camera->renderTextureForPlayerState.display();
 }
 
 struct Light
@@ -58,12 +61,20 @@ int main()
     shadowShader.loadFromFile("light.vert", "light.frag");
     shadowShader.setUniform("resolution", sf::Vector2f(WINDOW_WIDTH, WINDOW_HEIGHT));
 
+    Erosion erosion;
+    sf::Shader corosionShader;
+    corosionShader.loadFromFile("Corosion.frag", sf::Shader::Fragment);
+
     Camera* camera = new Camera();
 
     sf::Texture textureOfCave;
     textureOfCave.loadFromFile("../assets/textureForCave.png");
     sf::Texture textureOfTeam;
     textureOfTeam.loadFromFile("../assets/hole.png");
+    sf::Texture textureOfFlower;
+    textureOfFlower.loadFromFile("../assets/flower.png");
+    sf::Texture textureOfFlowerAngry;
+    textureOfFlowerAngry.loadFromFile("../assets/flower2.png");
 
     StartLobby start;
     EndGame* end = new EndGame();
@@ -81,21 +92,27 @@ int main()
 
     bool isFirstTimeOfSpreadLight = true;
 
-    Disaster* disasters = new Disaster(map, camera->GetView(), light.light);
+    Disaster* disasters = new Disaster(map, player, camera->GetView(), light.light);
+    Flower* flower = new Flower(map, textureOfFlower, textureOfFlowerAngry);
 
     while (camera->m_window.isOpen())
     {
+        if (player->GetElapsedTimeAfterStartLevel() <= 3.0f)
+        {
+            player->SetIsNextLevel(false);
+            continue;
+        }
         /*if (!start.GetStateDialogue())
         {
             start.DrawDialouge(camera->m_window);
             continue;
         }*/
 
-        /*if (end->GetStateDialogue())
+        if (end->GetStateDialogue())
         {
             end->DrawDialouge(camera->m_window);
             continue;
-        }*/
+        }
 
         //disasters->MakeRandomDisaster(player->GetPosition(), player->GetDirectionOfMovement());
         float deltaTimeForMovement = clock.restart().asSeconds();
@@ -105,8 +122,14 @@ int main()
         map->MoveWater();
 
         map->UpdateMap(camera->GetView(), camera->castTexture);
+        flower->DrawFlowers(camera->castTexture);
 
-        player->Update(camera->castTexture, camera->GetView(), deltaTimeForMovement);
+        player->Update(camera->castTexture, camera->renderTextureForPlayerState, camera->GetView(), deltaTimeForMovement, camera->m_window, flower);
+
+        if (player->GetIsNextLevel())
+        {
+            continue;
+        }
         camera->SetPlayerCoordsAfterMove(player->GetPosition());
         camera->UpdatePostionCamera();
 
@@ -118,8 +141,17 @@ int main()
         disasters->Shake(deltaTimeForMovement, camera->m_window);
         disasters->DoTurningOnTheLight();
 
+        sf::Vector2f mousePos = sf::Vector2f{ (float)sf::Mouse::getPosition().x, (float)(sf::Mouse::getPosition().y) };
+        mousePos.x /= 1920;
+        mousePos.y /= 1080;
+
+        corosionShader.setUniform("erosion", erosion.noiseTexture);
+        corosionShader.setUniform("secondPoint", sf::Vector2f{ 0.5f, 0.5f });
+        corosionShader.setUniform("firstPoint", player->GetFirstCoordForCorosion());
+        corosionShader.setUniform("erosion_max_offset", 1.0f);
+
         shadowShader.setUniform("mousePosition", player->GetPosition() - camera->GetViewPosition());
-        redrawFrame(camera->m_window, map, camera, shadowShader, light.blocks);
+        redrawFrame(camera->m_window, map, camera, shadowShader, light.blocks, corosionShader);
 
         camera->m_window.setTitle(std::to_string(1 / deltaTimeForMovement));
     }

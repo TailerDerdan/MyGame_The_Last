@@ -13,3 +13,6 @@
 
 const int WINDOW_WIDTH = 1920;
 const int WINDOW_HEIGHT = 1080;
+
+const int PLAYER_WIDTH = 20;
+const int PLAYER_HEIGHT = 35;

@@ -18,8 +18,6 @@ void main() {
 
 	float circle = 1.0 - length(uv - mouse) * 10;
 
-	float gray = (1.0f / 255) * 5;
-
 	if (pixel.rgb == vec3(1.0))
 	{
 		FragColor = vec4(1.000, 0.710, 0.000, circle * 0.3);

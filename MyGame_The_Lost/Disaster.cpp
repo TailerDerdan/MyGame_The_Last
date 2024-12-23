@@ -1,9 +1,10 @@
 #include "Disaster.h"
 
-Disaster::Disaster(Map* map, sf::View view, ShadowLight* light)
+Disaster::Disaster(Map* map, Player* player, sf::View view, ShadowLight* light)
 {
 	MakeTableOfWeight();
 	m_map = map;
+	m_player = player;
 	m_light = light;
 	m_view = m_view;
 	centerView = view.getCenter();
@@ -48,8 +49,10 @@ void Disaster::MakeRandomDisaster(sf::Vector2f playerCoord, bool isPlayerMovemen
 	//		break;
 	//	}
 	//}
-	DoRockfall(playerCoord, isPlayerMovementToRight);
+	//DoRockfall(playerCoord, isPlayerMovementToRight);
 	//DoSiren();
+	//DoTurningOffTheLight();
+	WriteDisaster(TypeOfDisaster::TurningOfTheLight, playerCoord, isPlayerMovementToRight);
 }
 
 void Disaster::WriteDisaster(TypeOfDisaster disaster, sf::Vector2f playerCoord, bool isPlayerMovementToRight)
@@ -64,6 +67,7 @@ void Disaster::WriteDisaster(TypeOfDisaster disaster, sf::Vector2f playerCoord, 
 		timerForDisaster.restart();
 		isFirstDisaster = false;
 		isNextDisaster = true;
+		m_player->ChangeFearLevel(20.f);
 		break;
 	case Siren:
 		//std::cout << "Siren" << std::endl;
@@ -71,12 +75,15 @@ void Disaster::WriteDisaster(TypeOfDisaster disaster, sf::Vector2f playerCoord, 
 		timerForDisaster.restart();
 		isFirstDisaster = false;
 		isNextDisaster = true;
+		m_player->ChangeFearLevel(35.f);
 		break;
 	case TurningOfTheLight:
 		//std::cout << "TurningOfTheLight" << std::endl;
 		DoTurningOffTheLight();
 		timerForDisaster.restart();
 		isFirstDisaster = false;
+		isNextDisaster = true;
+		m_player->ChangeFearLevel(15.f);
 		break;
 	default:
 		break;

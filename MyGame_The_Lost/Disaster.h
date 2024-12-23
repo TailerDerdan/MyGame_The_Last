@@ -1,6 +1,6 @@
 #pragma once
 #include "includes.h"
-#include "Map.h"
+#include "Player.h"
 #include "ShadowLight.h"
 
 const float CAMERA_ANGLE_SHAKE = 10.0f;
@@ -31,7 +31,7 @@ struct CameraAnimation
 class Disaster
 {
 public:
-	Disaster(Map* map, sf::View view, ShadowLight* light);
+	Disaster(Map* map, Player* player, sf::View view, ShadowLight* light);
 
 	void MakeRandomDisaster(sf::Vector2f playerCoord, bool isPlayerMovementToRight);
 	void FallingStone(float dTime, sf::RenderWindow& window);
@@ -59,6 +59,7 @@ private:
 
 private:
 	Map* m_map;
+	Player* m_player;
 	ShadowLight* m_light;
 	sf::View m_view;
 

@@ -12,13 +12,14 @@ public:
 
 	sf::RenderTexture castTexture;
 	sf::RenderTexture renderTextureForLight;
+	sf::RenderTexture renderTextureForPlayerState;
 
 	Camera();
 
 	void Update(sf::Vector2f& mouseCoords, bool& isMouseMove, Disaster* disasters);
 	sf::Vector2f GetViewPosition();
 
-	void DrawRenderTexture(sf::RenderWindow& window, const sf::Shader& shadowShader);
+	void DrawRenderTexture(sf::RenderWindow& window, const sf::Shader& shadowShader, const sf::Shader& corosionShader);
 
 	void SetPlayerCoordsBeforeMove(sf::Vector2f coord);
 	void SetPlayerCoordsAfterMove(sf::Vector2f coord);

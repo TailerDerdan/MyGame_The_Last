@@ -2,12 +2,16 @@
 
 Player::Player(Map* map, EndGame* end, sf::Vector2f viewPosition, sf::RenderTexture& castTexture)
 {
+	m_map = map;
+	m_end = end;
+
 	textureMovingRight.loadFromFile("../assets/movingRight.png");
 	textureMovingLeft.loadFromFile("../assets/movingLeft.png");
 
 	player.setTexture(textureMovingRight);
 	player.setTextureRect({ 0, 0, PLAYER_WIDTH, PLAYER_HEIGHT });
-	player.setPosition({ 175, 550 });
+
+	MakeInitialState();
 
 	framesForMovementLeft.resize(COUNT_SPRITE_MOVING);
 
@@ -19,15 +23,27 @@ Player::Player(Map* map, EndGame* end, sf::Vector2f viewPosition, sf::RenderText
 	castTexture.draw(rectForHp);
 	castTexture.draw(rectForOxygen);
 	castTexture.draw(rectForWater);
+	castTexture.draw(rectForFear);
 
 	castTexture.draw(wrapperRectForHp);
 	castTexture.draw(wrapperRectForOxygen);
 	castTexture.draw(wrapperRectForWater);
+	castTexture.draw(wrapperRectForFear);
 
 	timerForUpdateStatePlayer.restart();
 
-	m_map = map;
-	m_end = end;
+	timerForErosion.restart();
+}
+
+void Player::MakeInitialState()
+{
+	player.setPosition({ m_map->GetPlayerCoord().x * HEIGHT_TILE, m_map->GetPlayerCoord().y * WIDTH_TILE});
+	timerForPauseBetweenLevel.restart();
+}
+
+float Player::GetElapsedTimeAfterStartLevel()
+{
+	return timerForPauseBetweenLevel.getElapsedTime().asSeconds();
 }
 
 void Player::SetIntRectsForMoving()
@@ -441,7 +457,8 @@ void Player::PlayerDig(sf::Vector2f viewPosition)
 	m_map->DeleteStone(numberOfTile, coordOfTile);
 }
 
-void Player::Update(sf::RenderTexture& castTexture, const sf::View& view, float deltaTimeForMovement)
+void Player::Update(sf::RenderTexture& castTexture, sf::RenderTexture& renderTextureForPlayerState,
+	const sf::View& view, float deltaTimeForMovement, sf::RenderWindow& window, Flower* flower)
 {
 	statePlayerInWater.playerInWaterBottomRight = m_map->CoordInWater({ player.getPosition().x + player.getLocalBounds().width,
 		player.getPosition().y + player.getLocalBounds().height });
@@ -450,31 +467,70 @@ void Player::Update(sf::RenderTexture& castTexture, const sf::View& view, float 
 	statePlayerInWater.playerInWaterTopLeft = m_map->CoordInWater(player.getPosition());
 	statePlayerInWater.playerInWaterTopRight = m_map->CoordInWater({ player.getPosition().x + player.getLocalBounds().width, player.getPosition().y });
 
-	if (!m_movement.isTop)
+	if (!m_movement.isTop && !isBadState)
 	{
 		PlayerMoveToBottomSide(statePlayerInWater);
 	}
-	if (m_movement.isRight)
+	if (m_movement.isRight && !isBadState)
 	{
 		PlayerMoveToRightSide(deltaTimeForMovement, statePlayerInWater);
 	}
-	if (m_movement.isLeft)
+	if (m_movement.isLeft && !isBadState)
 	{
 		PlayerMoveToLeftSide(deltaTimeForMovement, statePlayerInWater);
 	}
-	if (!m_movement.isBottom)
+	if (!m_movement.isBottom && !isBadState)
 	{
 		PlayerMoveToTopSide(statePlayerInWater);
 	}
-	if (m_digging.isDig)
+	if (m_digging.isDig && !isBadState)
 	{
 		PlayerDig(view.getCenter() - view.getSize() / 2.0f);
 	}
-	if (m_map->DidPlayerFindTeam(player.getPosition()))
+	if (m_map->DidPlayerFindTeam(player.getPosition(), view, castTexture))
 	{
-		m_end->ChangeStateDialogue();
+		int level = m_map->GetCurrentLevel();
+		if (level == 4)
+		{
+			m_end->ChangeStateDialogue();
+		}
+		else
+		{
+			castTexture.clear();
+
+			window.draw(sf::Sprite(castTexture.getTexture()));
+			window.display();
+
+			sf::Font font;
+			font.loadFromFile("../assets/Chava-Regular.otf");
+
+			sf::Text nextLevel;
+			nextLevel.setFont(font);
+			nextLevel.setString(std::to_string(level) + " level");
+			nextLevel.setCharacterSize(50);
+			nextLevel.setFillColor(sf::Color(255, 255, 255));
+			nextLevel.setStyle(sf::Text::Style::Bold);
+			nextLevel.setPosition({ WINDOW_WIDTH / 2 - 200, WINDOW_HEIGHT / 2 - 100 });
+
+			window.clear();
+			window.draw(nextLevel);
+			window.display();
+
+			MakeInitialState();
+			m_map->MakeMap(view, castTexture);
+			isNextLevel = true;
+		}
 	}
-	UpdateRectsOfStates(view.getCenter() - view.getSize() / 2.0f, castTexture);
+	if (flower->IsCoordInAngryFlower(player.getPosition(), firstCoordForCorrosion.x))
+	{
+		isBadState = true;
+	}
+	else
+	{
+		isBadState = false;
+	}
+	ChangeFirstCoordForCorosion();
+	UpdateRectsOfStates(view.getCenter() - view.getSize() / 2.0f, renderTextureForPlayerState);
 	castTexture.draw(player);
 }
 
@@ -534,35 +590,46 @@ bool Player::GetDirectionOfMovement()
 void Player::MakeRectsOfStates(sf::Vector2f viewPosition)
 {
 	rectForHp.setFillColor(sf::Color(198, 7, 14));
-	rectForHp.setSize({ hp, HEIGHT_RECT_STATE_PLAYER });
+	rectForHp.setSize({ hp * KOEF_WIDTH_RECT_STATE_PLAYER, HEIGHT_RECT_STATE_PLAYER });
 	rectForHp.setPosition({ viewPosition.x + 20, viewPosition.y + Y_INDENT_FOR_RECT });
 
 	wrapperRectForHp.setFillColor(sf::Color(0, 0, 0, 0));
 	wrapperRectForHp.setOutlineColor(sf::Color(195, 195, 195));
 	wrapperRectForHp.setOutlineThickness(THICKNESS_FOR_RECT);
-	wrapperRectForHp.setSize({ MAX_HP, HEIGHT_RECT_STATE_PLAYER });
+	wrapperRectForHp.setSize({ MAX_HP * KOEF_WIDTH_RECT_STATE_PLAYER, HEIGHT_RECT_STATE_PLAYER});
 	wrapperRectForHp.setPosition(rectForHp.getPosition());
 
 	rectForWater.setFillColor(sf::Color(43, 30, 106));
-	rectForWater.setSize({ waterLevel, HEIGHT_RECT_STATE_PLAYER });
+	rectForWater.setSize({ waterLevel * KOEF_WIDTH_RECT_STATE_PLAYER, HEIGHT_RECT_STATE_PLAYER });
 	rectForWater.setPosition({ viewPosition.x + 20, viewPosition.y + Y_INDENT_FOR_RECT + HEIGHT_RECT_STATE_PLAYER + Y_INDENT_FOR_RECT });
 
 	wrapperRectForWater.setFillColor(sf::Color(0, 0, 0, 0));
 	wrapperRectForWater.setOutlineColor(sf::Color(195, 195, 195));
 	wrapperRectForWater.setOutlineThickness(THICKNESS_FOR_RECT);
-	wrapperRectForWater.setSize({ MAX_WATER_LEVEL, HEIGHT_RECT_STATE_PLAYER });
+	wrapperRectForWater.setSize({ MAX_WATER_LEVEL * KOEF_WIDTH_RECT_STATE_PLAYER, HEIGHT_RECT_STATE_PLAYER});
 	wrapperRectForWater.setPosition(rectForWater.getPosition());
 
 	rectForOxygen.setFillColor(sf::Color(44, 134, 179));
-	rectForOxygen.setSize({ oxygenLevel, HEIGHT_RECT_STATE_PLAYER });
+	rectForOxygen.setSize({ oxygenLevel * KOEF_WIDTH_RECT_STATE_PLAYER, HEIGHT_RECT_STATE_PLAYER });
 	rectForOxygen.setPosition({ viewPosition.x + 20, viewPosition.y + Y_INDENT_FOR_RECT + HEIGHT_RECT_STATE_PLAYER + Y_INDENT_FOR_RECT
 		+ HEIGHT_RECT_STATE_PLAYER + Y_INDENT_FOR_RECT });
 
 	wrapperRectForOxygen.setFillColor(sf::Color(0, 0, 0, 0));
 	wrapperRectForOxygen.setOutlineColor(sf::Color(195, 195, 195));
 	wrapperRectForOxygen.setOutlineThickness(THICKNESS_FOR_RECT);
-	wrapperRectForOxygen.setSize({ MAX_OXYGEN_LEVEL, HEIGHT_RECT_STATE_PLAYER });
+	wrapperRectForOxygen.setSize({ MAX_OXYGEN_LEVEL * KOEF_WIDTH_RECT_STATE_PLAYER, HEIGHT_RECT_STATE_PLAYER });
 	wrapperRectForOxygen.setPosition(rectForOxygen.getPosition());
+
+	rectForFear.setFillColor(sf::Color(44, 0, 42));
+	rectForFear.setSize({ oxygenLevel * KOEF_WIDTH_RECT_STATE_PLAYER, HEIGHT_RECT_STATE_PLAYER });
+	rectForFear.setPosition({ viewPosition.x + 20, viewPosition.y + Y_INDENT_FOR_RECT + HEIGHT_RECT_STATE_PLAYER + Y_INDENT_FOR_RECT
+		+ HEIGHT_RECT_STATE_PLAYER + Y_INDENT_FOR_RECT + HEIGHT_RECT_STATE_PLAYER + Y_INDENT_FOR_RECT });
+
+	wrapperRectForFear.setFillColor(sf::Color(0, 0, 0, 0));
+	wrapperRectForFear.setOutlineColor(sf::Color(195, 195, 195));
+	wrapperRectForFear.setOutlineThickness(THICKNESS_FOR_RECT);
+	wrapperRectForFear.setSize({ MAX_FEAR_LEVEL * KOEF_WIDTH_RECT_STATE_PLAYER, HEIGHT_RECT_STATE_PLAYER });
+	wrapperRectForFear.setPosition(rectForFear.getPosition());
 }
 
 void Player::UpdateRectsOfStates(sf::Vector2f viewPosition, sf::RenderTexture& castTexture)
@@ -571,18 +638,23 @@ void Player::UpdateRectsOfStates(sf::Vector2f viewPosition, sf::RenderTexture& c
 	rectForWater.setPosition({ viewPosition.x + 20, viewPosition.y + Y_INDENT_FOR_RECT + HEIGHT_RECT_STATE_PLAYER + Y_INDENT_FOR_RECT });
 	rectForOxygen.setPosition({ viewPosition.x + 20, viewPosition.y + Y_INDENT_FOR_RECT + HEIGHT_RECT_STATE_PLAYER + Y_INDENT_FOR_RECT
 		+ HEIGHT_RECT_STATE_PLAYER + Y_INDENT_FOR_RECT });
+	rectForFear.setPosition({ viewPosition.x + 20, viewPosition.y + Y_INDENT_FOR_RECT + HEIGHT_RECT_STATE_PLAYER + Y_INDENT_FOR_RECT
+		+ HEIGHT_RECT_STATE_PLAYER + Y_INDENT_FOR_RECT + HEIGHT_RECT_STATE_PLAYER + Y_INDENT_FOR_RECT });
 
 	wrapperRectForHp.setPosition(rectForHp.getPosition());
 	wrapperRectForWater.setPosition(rectForWater.getPosition());
 	wrapperRectForOxygen.setPosition(rectForOxygen.getPosition());
+	wrapperRectForFear.setPosition(rectForFear.getPosition());
 
 	castTexture.draw(rectForHp);
 	castTexture.draw(rectForOxygen);
 	castTexture.draw(rectForWater);
+	castTexture.draw(rectForFear);
 
 	castTexture.draw(wrapperRectForHp);
 	castTexture.draw(wrapperRectForOxygen);
 	castTexture.draw(wrapperRectForWater);
+	castTexture.draw(wrapperRectForFear);
 
 	if (timerForUpdateStatePlayer.getElapsedTime().asSeconds() <= 0.8f) return;
 
@@ -633,9 +705,78 @@ void Player::UpdateRectsOfStates(sf::Vector2f viewPosition, sf::RenderTexture& c
 		}
 	}
 
-	rectForHp.setSize({ hp, HEIGHT_RECT_STATE_PLAYER });
-	rectForWater.setSize({ waterLevel, HEIGHT_RECT_STATE_PLAYER });
-	rectForOxygen.setSize({ oxygenLevel, HEIGHT_RECT_STATE_PLAYER });
+	if (fearLevel > MIN_FEAR_LEVEL)
+	{
+		fearLevel -= 1.0f;
+	}
+
+	rectForHp.setSize({ hp * KOEF_WIDTH_RECT_STATE_PLAYER, HEIGHT_RECT_STATE_PLAYER });
+	rectForWater.setSize({ waterLevel * KOEF_WIDTH_RECT_STATE_PLAYER, HEIGHT_RECT_STATE_PLAYER });
+	rectForOxygen.setSize({ oxygenLevel * KOEF_WIDTH_RECT_STATE_PLAYER, HEIGHT_RECT_STATE_PLAYER });
+	rectForFear.setSize({ fearLevel * KOEF_WIDTH_RECT_STATE_PLAYER, HEIGHT_RECT_STATE_PLAYER });
 
 	timerForUpdateStatePlayer.restart();
+}
+
+bool Player::GetIsNextLevel()
+{
+	return isNextLevel;
+}
+
+void Player::SetIsNextLevel(bool state)
+{
+	isNextLevel = state;
+}
+
+void Player::ChangeFearLevel(float delta)
+{
+	if (delta < 0)
+	{
+		if (fearLevel >= MIN_FEAR_LEVEL)
+		{
+			fearLevel -= delta;
+		}
+	}
+
+	if (delta > 0)
+	{
+		if (fearLevel <= MAX_FEAR_LEVEL)
+		{
+			fearLevel += delta;
+		}
+	}
+}
+
+void Player::ChangeFirstCoordForCorosion()
+{
+	if (isBadState)
+	{
+		if (timerForErosion.getElapsedTime().asSeconds() < 0.05f) return;
+		if (firstCoordForCorrosion.x >= 0.5)
+		{
+			firstCoordForCorrosion.x += 0.001;
+			firstCoordForCorrosion.y += 0.001;
+		}
+		else
+		{
+			firstCoordForCorrosion.x += 0.005;
+			firstCoordForCorrosion.y += 0.005;
+		}
+
+		if (firstCoordForCorrosion.x >= 0.8)
+		{
+			isBadState = false;
+		}
+		
+		timerForErosion.restart();
+	}
+	else
+	{
+		firstCoordForCorrosion = { 0.001, 0.001 };
+	}
+}
+
+sf::Vector2f Player::GetFirstCoordForCorosion()
+{
+	return firstCoordForCorrosion;
 }

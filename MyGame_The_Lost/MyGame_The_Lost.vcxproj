@@ -146,6 +146,8 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Disaster.cpp" />
     <ClCompile Include="EndGame.cpp" />
+    <ClCompile Include="Erosion.cpp" />
+    <ClCompile Include="Flower.cpp" />
     <ClCompile Include="Map.cpp" />
     <ClCompile Include="MyGame_The_Lost.cpp" />
     <ClCompile Include="Player.cpp" />
@@ -156,6 +158,8 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Disaster.h" />
     <ClInclude Include="EndGame.h" />
+    <ClInclude Include="Erosion.h" />
+    <ClInclude Include="Flower.h" />
     <ClInclude Include="includes.h" />
     <ClInclude Include="Map.h" />
     <ClInclude Include="Player.h" />
@@ -164,6 +168,7 @@
     <ClInclude Include="Tile.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Corosion.frag" />
     <None Include="light.frag" />
     <None Include="light.vert" />
   </ItemGroup>

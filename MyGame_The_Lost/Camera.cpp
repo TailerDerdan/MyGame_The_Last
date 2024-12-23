@@ -9,6 +9,9 @@ Camera::Camera()
 	m_view.reset(sf::FloatRect({ 0.f, 0.f }, { WINDOW_WIDTH, WINDOW_HEIGHT }));
 	m_window.setView(m_view);
 
+	renderTextureForPlayerState.create(400, 400);
+	renderTextureForPlayerState.setSmooth(true);
+
 	renderTextureForLight.create(WINDOW_WIDTH, WINDOW_HEIGHT);
 	renderTextureForLight.setSmooth(true);
 
@@ -124,6 +127,9 @@ void Camera::Update(sf::Vector2f& mouseCoords, bool& isMouseMove, Disaster* disa
 	renderTextureForLight.setView(m_view);
 	renderTextureForLight.clear();
 
+	renderTextureForPlayerState.setView(m_view);
+	renderTextureForPlayerState.clear();
+
 	sf::Event event;
 	while (m_window.pollEvent(event))
 	{
@@ -131,10 +137,11 @@ void Camera::Update(sf::Vector2f& mouseCoords, bool& isMouseMove, Disaster* disa
 	}
 }
 
-void Camera::DrawRenderTexture(sf::RenderWindow& window, const sf::Shader& shadowShader)
+void Camera::DrawRenderTexture(sf::RenderWindow& window, const sf::Shader& shadowShader, const sf::Shader& corosionShader)
 {
-	window.draw(sf::Sprite(castTexture.getTexture()));
-	//window.draw(sf::Sprite(renderTextureForLight.getTexture()), &shadowShader);
+	window.draw(sf::Sprite(castTexture.getTexture()), &corosionShader);
+	window.draw(sf::Sprite(renderTextureForLight.getTexture()), &shadowShader);
+	window.draw(sf::Sprite(renderTextureForPlayerState.getTexture()));
 }
 
 void Camera::SetPlayer(Player* player)
