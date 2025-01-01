@@ -16,11 +16,12 @@ void main() {
 
 	vec4 pixel = texture2D(texture, i_tex);
 
-	float circle = 1.0 - length(uv - mouse) * 10;
+	float dist = length(uv - mouse);
+	float circle = 1.0 - dist * 10;
 
 	if (pixel.rgb == vec3(1.0))
 	{
-		FragColor = vec4(1.000, 0.710, 0.000, circle * 0.3);
+		FragColor = vec4(1.000, 0.710, 0.000, circle * 0.25);
 	}
 	if (pixel.rgb == vec3(0.0))
 	{

@@ -15,6 +15,8 @@ const int RADIUS_SPREAD_LIGHT_LEVEL_1 = 5;
 const int RADIUS_SPREAD_LIGHT_LEVEL_2 = 5;
 const int RADIUS_SPREAD_LIGHT_LEVEL_3 = 3;
 
+const float TIME_FOR_LEVEL = 7.0f * 60.0f;
+
 enum TypeOfMovementWater
 {
 	NoneDir,
@@ -76,6 +78,9 @@ public:
 	void AddBlockWater(BlockWater& water);
 
 	sf::Vector2f GetPlayerCoord();
+
+	void RunTimerForDeleteStone();
+	bool GetStateTimerForDeleteStone();
 
 private:
 	void FillFromCell(sf::Vector2f& coord, int& radius);
@@ -141,4 +146,7 @@ private:
 	sf::Clock timerForTransitionBetweenLevels;
 
 	sf::Vector2f coordPlayer;
+
+	sf::Clock timerForDeleteStone;
+	bool isTimerForDeleteStoneRun = false;
 };

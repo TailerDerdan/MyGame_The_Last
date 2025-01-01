@@ -7,19 +7,23 @@ ShadowLight::ShadowLight()
 
 ShadowLight::~ShadowLight() {     }
 
-std::vector<uint64_t> ShadowLight::MakeCircle(const std::vector<bool>& mapOfLightInBool)
+std::vector<uint64_t> ShadowLight::MakeLightInUint(const std::vector<bool>& mapOfLightInBool, sf::Vector2f borderForY)
 {
     std::vector<uint64_t> matrix(HEIGHT_MAP, 0);
 
     if (!isLightWork) return matrix;
 
-    for (int y = 0; y < HEIGHT_MAP; ++y)
+    int iter = 0;
+
+    for (int y = 0; y < HEIGHT_MAP; y++)
     {
-        for (int x = 0; x < WIDTH_MAP; ++x)
+        for (int x = borderForY.x, iter = 0; x < borderForY.y; x++, iter++)
         {
+            if (x >= WIDTH_MAP) continue;
+
             if (mapOfLightInBool[x * HEIGHT_MAP + y])
             {
-                matrix[y] |= (uint64_t(1) << x);
+                matrix[y] |= (uint64_t(1) << iter);
             }
         }
     }
@@ -32,7 +36,7 @@ void ShadowLight::ChangeWorkingLight()
     isLightWork = !isLightWork;
 }
 
-std::vector<GreedyQuad> ShadowLight::GreedyMeshBinaryPlane(std::vector<uint64_t>& data, int size)
+std::vector<GreedyQuad> ShadowLight::GreedyMeshBinaryPlane(std::vector<uint64_t>& data, int size, sf::Vector2f borderForY)
 {
     std::vector<GreedyQuad> res;
 
@@ -68,9 +72,11 @@ std::vector<GreedyQuad> ShadowLight::GreedyMeshBinaryPlane(std::vector<uint64_t>
                 w++;
             }
             GreedyQuad quad;
-
             quad.x = row - 1;
+
             quad.y = y - 1;
+            quad.y += borderForY.x;
+
             quad.w = w + 2;
             quad.h = h + 2;
 
@@ -89,6 +95,8 @@ std::vector<sf::Vertex> ShadowLight::CreateFromGreed(const std::vector<GreedyQua
 
     int colorGray = 5;
 
+    int alpha = 255;
+
     for (auto i : quads)
     {
         sf::Vertex topLeft;
@@ -98,19 +106,20 @@ std::vector<sf::Vertex> ShadowLight::CreateFromGreed(const std::vector<GreedyQua
 
         topLeft.position = sf::Vector2f(i.x, i.y) * textureSize;
         topLeft.texCoords = { 0, 0 };
-        topLeft.color = sf::Color(255, 255, 255);
+        topLeft.color = sf::Color(255, 255, 255, alpha);
 
         topRight.position = sf::Vector2f(i.x + i.w, i.y) * textureSize;
         topRight.texCoords = { 0, 1 };
-        topRight.color = sf::Color(255, 255, 255);
+        topRight.color = sf::Color(255, 255, 255, alpha);
 
         botRight.position = sf::Vector2f(i.x + i.w, i.y + i.h) * textureSize;
         botRight.texCoords = { 1, 1 };
-        botRight.color = sf::Color(255, 255, 255);
+        botRight.color = sf::Color(255, 255, 255, alpha);
 
         botLeft.position = sf::Vector2f(i.x, i.y + i.h) * textureSize;
         botLeft.texCoords = { 1, 0 };
-        botLeft.color = sf::Color(255, 255, 255);
+        botLeft.color = sf::Color(255, 255, 255, alpha);
+        
 
         res.push_back(topLeft);
         res.push_back(topRight);
@@ -119,4 +128,48 @@ std::vector<sf::Vertex> ShadowLight::CreateFromGreed(const std::vector<GreedyQua
     }
 
     return res;
+}
+
+sf::VertexArray ShadowLight::CreateAllVertexFromGreed(const std::vector<bool>& mapOfLightInBool)
+{
+    sf::Vector2f borderForX = { 0, 63 };
+
+    sf::VertexArray blocks;
+    blocks.setPrimitiveType(sf::Quads);
+
+    while (borderForX.x < WIDTH_MAP)
+    {
+        std::vector<uint64_t> vec = MakeLightInUint(mapOfLightInBool, borderForX);
+        std::vector<GreedyQuad> res = GreedyMeshBinaryPlane(vec, 64, borderForX);
+        std::vector<sf::Vertex> vertecies = CreateFromGreed(res);
+
+        size_t prevSizeBlocks = blocks.getVertexCount();
+
+        blocks.resize(vertecies.size() + blocks.getVertexCount());
+
+        int iter = 0;
+        int iterEnd = 0;
+        if (prevSizeBlocks == 0)
+        {
+            iter = 0;
+            iterEnd = vertecies.size();
+        }
+        else
+        {
+            iter = prevSizeBlocks;
+            iterEnd = vertecies.size() + prevSizeBlocks;
+        }
+
+        int iterForVertecies = 0;
+
+        for (int i = iter, iterForVertecies = 0; i < iterEnd; i++, iterForVertecies++)
+        {
+            blocks[i] = vertecies[iterForVertecies];
+        }
+
+        borderForX.x += 64;
+        borderForX.y += 64;
+    }
+
+    return blocks;
 }

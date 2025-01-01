@@ -6,12 +6,16 @@
 const float CAMERA_ANGLE_SHAKE = 10.0f;
 const float CAMERA_ANGLE_OFFSET = 20.0f;
 
+const float MAX_SPEED_GHOST = 20.0f;
+const float MIN_SPEED_GHOST = 10.0f;
+
 enum TypeOfDisaster
 {
 	None,
 	Rockfall,
 	Siren,
 	TurningOfTheLight,
+	Ghost,
 };
 
 struct StoneForRockFall
@@ -31,12 +35,13 @@ struct CameraAnimation
 class Disaster
 {
 public:
-	Disaster(Map* map, Player* player, sf::View view, ShadowLight* light);
+	Disaster(Map* map, Player* player, sf::View view, ShadowLight* light, sf::Texture& ghostTexture);
 
 	void MakeRandomDisaster(sf::Vector2f playerCoord, bool isPlayerMovementToRight);
 	void FallingStone(float dTime, sf::RenderWindow& window);
 	void Shake(float dTime, sf::RenderWindow& window);
 	void DoTurningOnTheLight();
+	void MoveGhost(sf::RenderTexture& castTexture);
 
 private:
 	void MakeTableOfWeight();
@@ -45,6 +50,7 @@ private:
 	void DoRockfall(sf::Vector2f playerCoord, bool isPlayerMovementToRight);
 	void DoSiren();
 	void DoTurningOffTheLight();
+	void DoGhost(sf::Vector2f playerCoord);
 
 	void FindSuitablesStonesForFall(sf::Vector2i tileCoordOfRightBottomRect, sf::Vector2i tileCoordOfLeftTopRect);
 	void CheckStoneAroundFallingStone(sf::Vector2i coordOfStone);
@@ -56,6 +62,8 @@ private:
 	void SetParamsForShake(float shakingPower, float maxTime);
 
 	void CheckCoordInField(sf::Vector2i& coord);
+
+	float GetModuleVector(const sf::Vector2f& vect);
 
 private:
 	Map* m_map;
@@ -90,4 +98,10 @@ private:
 
 	std::map<TypeOfDisaster, int> tableOFWeightOfDisaster;
 	int sumOfAllWeight = 0;
+
+	sf::Sprite ghost;
+	sf::Texture ghostTexture;
+	sf::IntRect ghostIntRect;
+	float speedForGhost = 10.0f;
+	bool isGhostMove = false;
 };

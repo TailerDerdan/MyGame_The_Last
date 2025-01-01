@@ -168,7 +168,7 @@
     <ClInclude Include="Tile.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Corosion.frag" />
+    <None Include="corosion.frag" />
     <None Include="light.frag" />
     <None Include="light.vert" />
   </ItemGroup>

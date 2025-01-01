@@ -84,6 +84,6 @@
   <ItemGroup>
     <None Include="light.frag" />
     <None Include="light.vert" />
-    <None Include="Corosion.frag" />
+    <None Include="corosion.frag" />
   </ItemGroup>
 </Project>

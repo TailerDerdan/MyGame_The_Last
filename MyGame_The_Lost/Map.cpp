@@ -7,7 +7,7 @@ Map::Map(const sf::View& view, sf::RenderTexture& castTexture, sf::Texture& text
 	textureOfCave = textureOfCaveOuter;
 	teamOfPlayer_texture = textureOfHole;
 
-	coordPlayer = { 10.0f, 10.0f };
+	coordPlayer = { 10.0f, 60.0f };
 
 	MakeMap(view, castTexture);
 
@@ -155,6 +155,7 @@ void Map::GenerateMap(int countOfIteration)
 
 void Map::FillCoalFromCell(sf::Vector2f coord, int radius)
 {
+	if (coord.x < 0 || coord.x >= WIDTH_MAP || coord.y < 0 || coord.y >= HEIGHT_MAP) return;
 	if (generatedMap[coord.x][coord.y] == TypeTile::Wall) return;
 	if ((coord.x >= -1 && coord.x <= 1) || (coord.y >= -1 && coord.y <= 1) || coord.y == HEIGHT_MAP || coord.y == WIDTH_MAP) return;
 
@@ -192,13 +193,13 @@ void Map::SpreadCoal(sf::Vector2f centralBlock)
 void Map::GenerateCoal(int countOfMainBlockCoal)
 {
 	int countOfCenterBlockCoal = countOfMainBlockCoal;
-	for (int iterX = 1; iterX < HEIGHT_MAP - 1; iterX++)
+	for (int iterX = 1; iterX < WIDTH_MAP - 1; iterX++)
 	{
 		if (countOfCenterBlockCoal == 0) return;
 
-		for (int iterY = 1; iterY < WIDTH_MAP - 1; iterY++)
+		for (int iterY = 1; iterY < HEIGHT_MAP - 1; iterY++)
 		{
-			if (generatedMap[iterY][iterX] == TypeTile::Wall) continue;
+			if (generatedMap[iterX][iterY] == TypeTile::Wall) continue;
 			if ((iterX >= -1 && iterX <= 1) || (iterY >= -1 && iterY <= 1) || iterY == HEIGHT_MAP || iterX == WIDTH_MAP) continue;
 			if (countOfCenterBlockCoal == 0) continue;
 
@@ -206,9 +207,8 @@ void Map::GenerateCoal(int countOfMainBlockCoal)
 
 			if (randomNumber >= 9990)
 			{
-				//std::cout << iterX << " " << iterY << " qwe" << std::endl;
 				countOfCenterBlockCoal--;
-				SpreadCoal(sf::Vector2f( float(iterY), float(iterX) ));
+				SpreadCoal(sf::Vector2f( float(iterX), float(iterY) ));
 			}
 		}
 	}
@@ -373,7 +373,6 @@ void Map::SetParamsForStone(ParamsForTile params)
 {
 	if (generatedMap[params.iterX][params.iterY] == TypeTile::Stone && mapOfTexture[params.iterForVector])
 	{
-
 		mapOfTexture[params.iterForVector]->number = params.numberOfTile;
 
 		mapOfTexture[params.iterForVector]->weight = 2.0f;
@@ -398,7 +397,7 @@ void Map::SetParamsForWall(ParamsForTile params)
 
 		mapOfTexture[params.iterForVector]->typeTile = TypeTile::Wall;
 
-		mapOfTexture[params.iterForVector]->texture = { 25, 0, WIDTH_TILE, HEIGHT_TILE };
+		mapOfTexture[params.iterForVector]->texture = { 26, 0, WIDTH_TILE, HEIGHT_TILE };
 		mapOfTexture[params.iterForVector]->sprite.setTextureRect(mapOfTexture[params.iterForVector]->texture);
 
 		mapOfTexture[params.iterForVector]->sprite.setPosition({ float(params.xCoord * WIDTH_TILE), float(params.yCoord * HEIGHT_TILE) });
@@ -433,7 +432,7 @@ void Map::SetParamsForCoal(ParamsForTile params)
 
 		mapOfTexture[params.iterForVector]->typeTile = TypeTile::Coal;
 
-		mapOfTexture[params.iterForVector]->texture = { 50, 0, WIDTH_TILE, HEIGHT_TILE };
+		mapOfTexture[params.iterForVector]->texture = { 52, 0, WIDTH_TILE, HEIGHT_TILE };
 		mapOfTexture[params.iterForVector]->sprite.setTextureRect(mapOfTexture[params.iterForVector]->texture);
 
 		mapOfTexture[params.iterForVector]->sprite.setPosition({ float(params.xCoord * WIDTH_TILE), float(params.yCoord * HEIGHT_TILE) });
@@ -450,7 +449,7 @@ void Map::SetParamsForWaterCoal(ParamsForTile params)
 
 		mapOfTexture[params.iterForVector]->typeTile = TypeTile::WaterInCoal;
 
-		mapOfTexture[params.iterForVector]->texture = { 50, 0, WIDTH_TILE, HEIGHT_TILE };
+		mapOfTexture[params.iterForVector]->texture = { 52, 0, WIDTH_TILE, HEIGHT_TILE };
 		mapOfTexture[params.iterForVector]->sprite.setTextureRect(mapOfTexture[params.iterForVector]->texture);
 
 		mapOfTexture[params.iterForVector]->sprite.setPosition({ float(params.xCoord * WIDTH_TILE), float(params.yCoord * HEIGHT_TILE) });
@@ -552,7 +551,7 @@ void Map::SpreadTheLight(sf::Vector2f& coord, bool isFirstTimeOfSpreadLight)
 		{
 			for (int iterX = previousCoordOfSpreadLight.x - previousRadiusOfSpreadLight - 1; iterX < previousCoordOfSpreadLight.x + previousRadiusOfSpreadLight + 1; iterX++)
 			{
-				if (iterY < 0 || iterX < 0)
+				if (iterY < 0 || iterX < 0 || iterY >= HEIGHT_MAP || iterX >= WIDTH_MAP)
 				{
 					continue;
 				}
@@ -617,6 +616,7 @@ std::vector<bool> Map::GetMapOfLightInBool()
 
 void Map::DeleteStone(int numberOfTile, sf::Vector2f coordOfTile)
 {
+	isTimerForDeleteStoneRun = true;
 	if (generatedMap[int(coordOfTile.x)][int(coordOfTile.y)] == TypeTile::WaterInStone || generatedMap[int(coordOfTile.x)][int(coordOfTile.y)] == TypeTile::WaterInCoal)
 	{
 		BlockWater water;
@@ -628,10 +628,12 @@ void Map::DeleteStone(int numberOfTile, sf::Vector2f coordOfTile)
 		blocksWater.push_back(water);
 	}
 
-	//std::cout << generatedMap[int(coordOfTile.x)][int(coordOfTile.y)] << std::endl;
+	if (timerForDeleteStone.getElapsedTime().asSeconds() <= 0.4f) return;
 
 	generatedMap[int(coordOfTile.x)][int(coordOfTile.y)] = TypeTile::Wall;
 	mapOfTileInBool[numberOfTile] = 0;
+
+	isTimerForDeleteStoneRun = false;
 }
 
 void Map::MoveStoneDown(sf::Vector2f coordOfTile)
@@ -641,7 +643,6 @@ void Map::MoveStoneDown(sf::Vector2f coordOfTile)
 		generatedMap[WIDTH_MAP - 1][HEIGHT_MAP - 1] = TypeTile::Stone;
 		return;
 	}
-
 	generatedMap[coordOfTile.x][coordOfTile.y] = generatedMap[coordOfTile.x - 1][coordOfTile.y];
 	generatedMap[coordOfTile.x - 1][coordOfTile.y] = TypeTile::Wall;
 }
@@ -1187,8 +1188,8 @@ void Map::CreatePortalToNextLevel()
 	int xCoordForGame = Random(WIDTH_MAP / 2, WIDTH_MAP) * WIDTH_TILE;
 	int yCoordForGame = Random(HEIGHT_MAP - 40, HEIGHT_MAP - 20) * HEIGHT_TILE;
 
-	//int xCoordForGame = 10 * 25;
-	//int yCoordForGame = 10 * 25;
+	//int xCoordForGame = 15 * 25;
+	//int yCoordForGame = 15 * 25;
 
 	std::cout << xCoordForGame / 25 << " " << yCoordForGame / 25 << " portal" << std::endl;
 
@@ -1254,4 +1255,14 @@ void Map::AddBlockWater(BlockWater& water)
 		generatedMap[water.coord.x][water.coord.y] = TypeTile::Wall;
 		blocksWater.push_back(water);
 	}
+}
+
+void Map::RunTimerForDeleteStone()
+{
+	timerForDeleteStone.restart();
+}
+
+bool Map::GetStateTimerForDeleteStone()
+{
+	return isTimerForDeleteStoneRun;
 }

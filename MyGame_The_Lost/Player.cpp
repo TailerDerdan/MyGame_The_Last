@@ -33,10 +33,13 @@ Player::Player(Map* map, EndGame* end, sf::Vector2f viewPosition, sf::RenderText
 	timerForUpdateStatePlayer.restart();
 
 	timerForErosion.restart();
+
+	fontForTimer.loadFromFile("../assets/Chava-Regular.otf");
 }
 
 void Player::MakeInitialState()
 {
+	timerForLevel.restart();
 	player.setPosition({ m_map->GetPlayerCoord().x * HEIGHT_TILE, m_map->GetPlayerCoord().y * WIDTH_TILE});
 	timerForPauseBetweenLevel.restart();
 }
@@ -174,7 +177,7 @@ sf::Vector2f Player::GetPosition()
 	return player.getPosition();
 }
 
-void Player::UpdateMovement(PlayerMovement movement)
+void Player::UpdateMovement(PlayerMovement& movement)
 {
 	m_movement.isTop = movement.isTop;
 	m_movement.isRight = movement.isRight;
@@ -393,9 +396,10 @@ void Player::PlayerMoveToBottomSide(StatePlayerInWater statePlayerForWater)
 
 	sf::Vector2f newDirection = { direction.x * movementOffset, direction.y * movementOffset };
 
-	if (std::abs(endPoint.y - positionPlayer.y) <= 1 || !CanPlayerPass(positionPlayer + newDirection, SideForChechiking::Bottom))
+	if (std::abs(endPoint.y - positionPlayer.y) <= 1 || !CanPlayerPass(positionPlayer + newDirection, SideForChechiking::Bottom) || isBadState)
 	{
 		m_movement.isBottom = false;
+		isJump = false;
 		return;
 	}
 
@@ -406,25 +410,27 @@ void Player::PlayerMoveToBottomSide(StatePlayerInWater statePlayerForWater)
 void Player::PlayerMoveToTopSide(StatePlayerInWater statePlayerForWater)
 {
 	sf::Vector2f positionPlayer = player.getPosition();
-	sf::Vector2f endPoint = { positionPlayer.x, positionPlayer.y - PLAYER_HEIGHT * 1.5f };
+	sf::Vector2f endPoint = { positionPlayer.x, endCoordForJump.y };
 
-	sf::Vector2f motion = { endPoint.x - positionPlayer.x, endPoint.y - positionPlayer.y };
+	sf::Vector2f motion = { endPoint.x - positionPlayer.x, (endPoint.y - positionPlayer.y) };
 	float moduleMotion = GetModuleVector(motion);
 	sf::Vector2f direction = { motion.x / moduleMotion, motion.y / moduleMotion };
 
 	float deltaTime = 0.016;
-	float movementOffset = SPEED_PLAYER * deltaTime;
+	float movementOffset = SPEED_PLAYER_FOR_JUMP * deltaTime;
 
 	if (statePlayerForWater.playerInWaterBottomLeft || statePlayerForWater.playerInWaterBottomRight || 
 		statePlayerForWater.playerInWaterTopLeft || statePlayerForWater.playerInWaterTopRight)
 	{
-		movementOffset = SPEED_PLAYER_FOR_WATER * deltaTime;
+		movementOffset = SPEED_PLAYER_FOR_JUMP_FOR_WATER * deltaTime;
 	}
 
 	sf::Vector2f newDirection = { direction.x * movementOffset, direction.y * movementOffset };
 
-	if (std::abs(endPoint.y - positionPlayer.y) <= 5 || !CanPlayerPass(positionPlayer + newDirection, SideForChechiking::Top))
+	if (std::abs(endPoint.y - positionPlayer.y) <= 1 || !CanPlayerPass(positionPlayer + newDirection, SideForChechiking::Top))
 	{
+		m_movement.isTop = false;
+		m_movement.isBottom = true;
 		return;
 	}
 
@@ -454,6 +460,11 @@ void Player::PlayerDig(sf::Vector2f viewPosition)
 
 	int numberOfTile = coordOfTile.x * HEIGHT_MAP + coordOfTile.y;
 
+	if (!m_map->GetStateTimerForDeleteStone())
+	{
+		m_map->RunTimerForDeleteStone();
+	}
+
 	m_map->DeleteStone(numberOfTile, coordOfTile);
 }
 
@@ -467,8 +478,13 @@ void Player::Update(sf::RenderTexture& castTexture, sf::RenderTexture& renderTex
 	statePlayerInWater.playerInWaterTopLeft = m_map->CoordInWater(player.getPosition());
 	statePlayerInWater.playerInWaterTopRight = m_map->CoordInWater({ player.getPosition().x + player.getLocalBounds().width, player.getPosition().y });
 
+	if (!isJump)
+	{
+		endCoordForJump = { player.getPosition().x, player.getPosition().y - 48 };
+	}
 	if (!m_movement.isTop && !isBadState)
 	{
+		m_movement.isTop = false;
 		PlayerMoveToBottomSide(statePlayerInWater);
 	}
 	if (m_movement.isRight && !isBadState)
@@ -479,8 +495,9 @@ void Player::Update(sf::RenderTexture& castTexture, sf::RenderTexture& renderTex
 	{
 		PlayerMoveToLeftSide(deltaTimeForMovement, statePlayerInWater);
 	}
-	if (!m_movement.isBottom && !isBadState)
+	if (m_movement.isTop && !m_movement.isBottom && !isBadState)
 	{
+		isJump = true;
 		PlayerMoveToTopSide(statePlayerInWater);
 	}
 	if (m_digging.isDig && !isBadState)
@@ -501,11 +518,8 @@ void Player::Update(sf::RenderTexture& castTexture, sf::RenderTexture& renderTex
 			window.draw(sf::Sprite(castTexture.getTexture()));
 			window.display();
 
-			sf::Font font;
-			font.loadFromFile("../assets/Chava-Regular.otf");
-
 			sf::Text nextLevel;
-			nextLevel.setFont(font);
+			nextLevel.setFont(fontForTimer);
 			nextLevel.setString(std::to_string(level) + " level");
 			nextLevel.setCharacterSize(50);
 			nextLevel.setFillColor(sf::Color(255, 255, 255));
@@ -517,6 +531,7 @@ void Player::Update(sf::RenderTexture& castTexture, sf::RenderTexture& renderTex
 			window.display();
 
 			MakeInitialState();
+
 			m_map->MakeMap(view, castTexture);
 			isNextLevel = true;
 		}
@@ -525,12 +540,12 @@ void Player::Update(sf::RenderTexture& castTexture, sf::RenderTexture& renderTex
 	{
 		isBadState = true;
 	}
-	else
-	{
-		isBadState = false;
-	}
+
+	std::cout << std::floor(player.getPosition().x / 25) << " " << std::floor(player.getPosition().y / 25) << " player" << std::endl;
+
 	ChangeFirstCoordForCorosion();
 	UpdateRectsOfStates(view.getCenter() - view.getSize() / 2.0f, renderTextureForPlayerState);
+	PrintTimeLevel(renderTextureForPlayerState, view.getCenter() - view.getSize() / 2.0f);
 	castTexture.draw(player);
 }
 
@@ -585,6 +600,11 @@ void Player::UpdateFramesMovementLeft(float deltaTime)
 bool Player::GetDirectionOfMovement()
 {
 	return isPlayerMovementToRight;
+}
+
+bool Player::GetIsPlayerFall()
+{
+	return m_movement.isBottom;
 }
 
 void Player::MakeRectsOfStates(sf::Vector2f viewPosition)
@@ -754,8 +774,8 @@ void Player::ChangeFirstCoordForCorosion()
 		if (timerForErosion.getElapsedTime().asSeconds() < 0.05f) return;
 		if (firstCoordForCorrosion.x >= 0.5)
 		{
-			firstCoordForCorrosion.x += 0.001;
-			firstCoordForCorrosion.y += 0.001;
+			firstCoordForCorrosion.x += 0.002;
+			firstCoordForCorrosion.y += 0.002;
 		}
 		else
 		{
@@ -779,4 +799,26 @@ void Player::ChangeFirstCoordForCorosion()
 sf::Vector2f Player::GetFirstCoordForCorosion()
 {
 	return firstCoordForCorrosion;
+}
+
+void Player::SetBadState(bool state)
+{
+	isBadState = state;
+}
+
+void Player::PrintTimeLevel(sf::RenderTexture& texturePlayerState, sf::Vector2f viewPosition)
+{
+	std::string text = std::to_string(int(std::floor(timerForLevel.getElapsedTime().asSeconds() / 60))) + ":" +
+		std::to_string(int(timerForLevel.getElapsedTime().asSeconds()) % 60);
+
+	sf::Text timeForLevel;
+	timeForLevel.setFont(fontForTimer);
+	timeForLevel.setString(text);
+	timeForLevel.setCharacterSize(100);
+	timeForLevel.setFillColor(sf::Color(255, 255, 255));
+	timeForLevel.setStyle(sf::Text::Style::Bold);
+	timeForLevel.setPosition({ viewPosition.x + 20 + 100 * KOEF_WIDTH_RECT_STATE_PLAYER + 60, viewPosition.y + 20 });
+
+	texturePlayerState.draw(timeForLevel);
+	texturePlayerState.display();
 }

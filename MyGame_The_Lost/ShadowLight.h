@@ -11,11 +11,13 @@ struct GreedyQuad
 class ShadowLight
 {
 public:
-	std::vector<uint64_t> MakeCircle(const std::vector<bool>& mapOfTileInBool);
+	std::vector<uint64_t> MakeLightInUint(const std::vector<bool>& mapOfLightInBool, sf::Vector2f borderForY);
 
-	std::vector<GreedyQuad> GreedyMeshBinaryPlane(std::vector<uint64_t>& data, int size);
+	std::vector<GreedyQuad> GreedyMeshBinaryPlane(std::vector<uint64_t>& data, int size, sf::Vector2f borderForY);
 
 	std::vector<sf::Vertex> CreateFromGreed(const std::vector<GreedyQuad>& quads);
+
+    sf::VertexArray CreateAllVertexFromGreed(const std::vector<bool>& mapOfLightInBool);
 
     void ChangeWorkingLight();
 

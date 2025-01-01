@@ -4,10 +4,12 @@
 #include "EndGame.h"
 #include "Flower.h"
 
-const float SPEED_PLAYER = 6.0f;
+const float SPEED_PLAYER = 7.5f;
+const float SPEED_PLAYER_FOR_JUMP = 25.0f;
 const float SPEED_PLAYER_FOR_FALL = 10.0f;
 
 const float SPEED_PLAYER_FOR_WATER = 3.0f;
+const float SPEED_PLAYER_FOR_JUMP_FOR_WATER = 5.0f;
 const float SPEED_PLAYER_FOR_WATER_FOR_FALL = 5.0f;
 
 const int COUNT_SPRITE_MOVING = 12;
@@ -71,7 +73,7 @@ public:
 
 	void Update(sf::RenderTexture& castTexture, sf::RenderTexture& renderTextureForPlayerState, const sf::View& view, float deltaTimeForMovement, sf::RenderWindow& window, Flower* flower);
 
-	void UpdateMovement(PlayerMovement movement);
+	void UpdateMovement(PlayerMovement& movement);
 	void UpdateMouseCoord(sf::Vector2f mouseCoord);
 	void UpdateDigging(bool isPlayerDig);
 	void DisplayMovement();
@@ -81,6 +83,7 @@ public:
 	float GetElapsedTimeAfterStartLevel();
 
 	bool GetDirectionOfMovement();
+	bool GetIsPlayerFall();
 
 	sf::Vector2f GetPosition();
 
@@ -91,6 +94,8 @@ public:
 	
 	sf::Vector2f GetFirstCoordForCorosion();
 	void ChangeFirstCoordForCorosion();
+
+	void SetBadState(bool state);
 
 	~Player();
 
@@ -120,6 +125,8 @@ private:
 	void UpdateRectsOfStates(sf::Vector2f viewPosition, sf::RenderTexture& castTexture);
 	void MakeRectsOfStates(sf::Vector2f viewPosition);
 
+	void PrintTimeLevel(sf::RenderTexture& texturePlayerState, sf::Vector2f viewPosition);
+
 private:
 	PlayerMovement m_movement;
 	PlayerDigging m_digging;
@@ -132,6 +139,9 @@ private:
 	Map* m_map;
 
 	EndGame* m_end;
+
+	sf::Vector2f endCoordForJump;
+	bool isJump = false;
 
 	bool isPlayerMovementToRight = true;
 
@@ -177,4 +187,7 @@ private:
 	bool isBadState = false;
 	sf::Vector2f firstCoordForCorrosion = { 0.001, 0.001 };
 	sf::Clock timerForErosion;
+
+	sf::Clock timerForLevel;
+	sf::Font fontForTimer;
 };

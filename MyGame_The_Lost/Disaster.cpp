@@ -1,6 +1,6 @@
 #include "Disaster.h"
 
-Disaster::Disaster(Map* map, Player* player, sf::View view, ShadowLight* light)
+Disaster::Disaster(Map* map, Player* player, sf::View view, ShadowLight* light, sf::Texture& newGhostTexture)
 {
 	MakeTableOfWeight();
 	m_map = map;
@@ -10,11 +10,18 @@ Disaster::Disaster(Map* map, Player* player, sf::View view, ShadowLight* light)
 	centerView = view.getCenter();
 
 	isLightWork = true;
+	isGhostMove = false;
 
 	soundOfSiren.openFromFile("../assets/siren.wav");
 	soundOfRockfall.openFromFile("../assets/rockfall.wav");
 	soundOfTurningOn.openFromFile("../assets/turningOn.wav");
 	soundOfTurningOff.openFromFile("../assets/turningOff.wav");
+
+	ghostTexture = newGhostTexture;
+	ghostIntRect = { 0, 0, 250, 250 };
+	ghost.setTexture(ghostTexture);
+	ghost.setTextureRect(ghostIntRect);
+	ghost.setColor(sf::Color(255, 255, 255, 0));
 
 	timerForDisaster.restart();
 }
@@ -50,9 +57,10 @@ void Disaster::MakeRandomDisaster(sf::Vector2f playerCoord, bool isPlayerMovemen
 	//	}
 	//}
 	//DoRockfall(playerCoord, isPlayerMovementToRight);
+	DoGhost(playerCoord);
 	//DoSiren();
 	//DoTurningOffTheLight();
-	WriteDisaster(TypeOfDisaster::TurningOfTheLight, playerCoord, isPlayerMovementToRight);
+	//WriteDisaster(TypeOfDisaster::TurningOfTheLight, playerCoord, isPlayerMovementToRight);
 }
 
 void Disaster::WriteDisaster(TypeOfDisaster disaster, sf::Vector2f playerCoord, bool isPlayerMovementToRight)
@@ -154,7 +162,7 @@ void Disaster::Shake(float dTime, sf::RenderWindow& window)
 	offset.y = CAMERA_ANGLE_OFFSET * m_animation.shakingPower * RandomAngleForShake();
 
 	m_view.setRotation(angle);
-	m_view.setCenter(centerView + offset);
+	m_view.setCenter(m_view.getCenter());
 	window.setView(m_view);
 
 	m_animation.current += sf::seconds(dTime);
@@ -435,4 +443,53 @@ void Disaster::DoTurningOnTheLight()
 		m_light->ChangeWorkingLight();
 		isLightWork = true;
 	}
+}
+
+float Disaster::GetModuleVector(const sf::Vector2f& vect)
+{
+	return std::sqrt(vect.x * vect.x + vect.y * vect.y);
+}
+
+void Disaster::DoGhost(sf::Vector2f playerCoord)
+{
+	//m_player->SetBadState(true);
+	isGhostMove = true;
+	ghost.setColor(sf::Color(255, 255, 255, 255));
+	ghost.setPosition(playerCoord.x + 200, playerCoord.y - 150);
+}
+
+void Disaster::MoveGhost(sf::RenderTexture& castTexture)
+{
+	if (!isGhostMove) return;
+
+	sf::Vector2f positionGhost = ghost.getPosition();
+	sf::Vector2f endPoint = { -100, positionGhost.y };
+
+	sf::Vector2f motion = { endPoint.x - positionGhost.x, endPoint.y - positionGhost.y };
+	float moduleMotion = GetModuleVector(motion);
+	sf::Vector2f direction = { motion.x / moduleMotion, motion.y / moduleMotion };
+
+	float deltaTime = 0.016;
+
+	float movementOffset = 0.0f;
+
+	if (positionGhost.x > 20.f)
+	{
+		movementOffset = 18 * (200 / positionGhost.x) * deltaTime;
+	}
+	else
+	{
+		movementOffset = 18 * deltaTime;
+	}	 
+
+	sf::Vector2f newDirection = { direction.x * movementOffset, direction.y * movementOffset };
+
+	if (std::abs(endPoint.x - positionGhost.x) <= 1.0f)
+	{
+		isGhostMove = false;
+		return;
+	}
+
+	ghost.setPosition(positionGhost + newDirection);
+	castTexture.draw(ghost);
 }

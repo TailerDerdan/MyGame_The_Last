@@ -1,11 +1,11 @@
 #include "Flower.h"
 
-Flower::Flower(Map* map, sf::Texture& textureForFlowers, sf::Texture& textureOfFlowerAngry)
+Flower::Flower(Map* map, sf::Texture& textureForFlowers)
 {
 	m_map = map;
 	MakeRandomGeneration(COUNT_FRIENDLY_FLOWER, COUNT_ANGRY_FLOWER);
 	m_textureForFlowers = textureForFlowers;
-	m_textureOfFlowerAngry = textureOfFlowerAngry;
+	m_textureOfFlowerAngry = textureForFlowers;
 }
 
 int Flower::Random(int min, int max)
@@ -51,10 +51,11 @@ void Flower::MakeRandomGeneration(int countOfFlowerFriendlyBlock, int countOfFlo
 
 		for (int iterY = 1; iterY < HEIGHT_MAP - 1; iterY++)
 		{
+			if ((iterX >= -1 && iterX <= 1) || (iterY >= -1 && iterY <= 1) || iterY == HEIGHT_MAP - 1 || iterX == WIDTH_MAP - 1) continue;
+
 			std::pair<bool, bool> stateAboutPositionFlower = IsPlaceForFlower(iterX, iterY);
 			if (stateAboutPositionFlower.first)
 			{
-				if ((iterX >= -1 && iterX <= 1) || (iterY >= -1 && iterY <= 1) || iterY == HEIGHT_MAP || iterX == WIDTH_MAP) continue;
 				if (countOfCenterBlockFriendlyFlower == 0 || countOfCenterBlockAngryFlower == 0) continue;
 
 				int randomNumber = Random(0, 10000);
@@ -82,7 +83,7 @@ void Flower::MakeRandomGeneration(int countOfFlowerFriendlyBlock, int countOfFlo
 					
 					flowerSprite.texture = { 0, 0, WIDTH_TILE, HEIGHT_TILE };
 					flowerSprite.sprite.setTextureRect(flowerSprite.texture);
-					flowerSprite.sprite.setPosition({ float(iterY * WIDTH_TILE), float(iterX * HEIGHT_TILE) });
+					flowerSprite.sprite.setPosition({ float(iterY * HEIGHT_TILE), float(iterX * WIDTH_TILE) });
 					flowerSprite.flowerType = flowerType;
 
 					flowersSprite.push_back(flowerSprite);
@@ -134,11 +135,11 @@ void Flower::DrawFlowers(sf::RenderTexture& castTexture)
 
 bool Flower::IsCoordInAngryFlower(sf::Vector2f coord, float xCoordErosionShader)
 {
-	int iter = 0;
 	int iterNecessary = -1;
 	bool isFlower = false;
-	for (auto& flower : flowersSprite)
+	for (int iter = 0; iter < flowersSprite.size(); iter++)
 	{
+		FlowerSprite flower = flowersSprite[iter];
 		if (flower.flowerType == FlowerType::Friendly) continue;
 
 		if (((coord.x >= flower.sprite.getPosition().x && coord.x <= flower.sprite.getPosition().x + flower.sprite.getLocalBounds().width &&
@@ -154,10 +155,10 @@ bool Flower::IsCoordInAngryFlower(sf::Vector2f coord, float xCoordErosionShader)
 			if (xCoordErosionShader >= 0.8)
 			{
 				iterNecessary = iter;
+				break;
 			}
 			isFlower = true;
 		}
-		iter++;
 	}
 
 	if (iterNecessary != -1)

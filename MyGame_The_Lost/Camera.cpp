@@ -56,7 +56,7 @@ void Camera::PlayerHandler()
 	{
 		playerMovement.isRight = true;
 	}
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::W) && !m_player->GetIsPlayerFall())
 	{
 		playerMovement.isTop = true;
 	}
@@ -116,7 +116,7 @@ void Camera::EventHandler(sf::Event& event, sf::Vector2f& mouseCoords, bool& isM
 
 sf::Vector2f Camera::GetViewPosition()
 {
-	return viewPosition;
+	return { m_view.getCenter().x - m_view.getSize().x / 2, m_view.getCenter().y - m_view.getSize().y / 2 };
 }
 
 void Camera::Update(sf::Vector2f& mouseCoords, bool& isMouseMove, Disaster* disasters)
@@ -141,6 +141,7 @@ void Camera::DrawRenderTexture(sf::RenderWindow& window, const sf::Shader& shado
 {
 	window.draw(sf::Sprite(castTexture.getTexture()), &corosionShader);
 	window.draw(sf::Sprite(renderTextureForLight.getTexture()), &shadowShader);
+	//window.draw(sf::Sprite(renderTextureForLight.getTexture()));
 	window.draw(sf::Sprite(renderTextureForPlayerState.getTexture()));
 }
 

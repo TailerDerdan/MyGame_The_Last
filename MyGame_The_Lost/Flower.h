@@ -22,7 +22,7 @@ struct FlowerSprite
 class Flower
 {
 public:
-	Flower(Map* map, sf::Texture& textureForFlowers, sf::Texture& textureOfFlowerAngry);
+	Flower(Map* map, sf::Texture& textureForFlowers);
 	void MakeRandomGeneration(int countOfFlowerFriendlyBlock, int countOfFlowerAngryBlock);
 	void DrawFlowers(sf::RenderTexture& castTexture);
 
