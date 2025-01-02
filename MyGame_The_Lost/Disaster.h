@@ -1,7 +1,7 @@
 #pragma once
 #include "includes.h"
-#include "Player.h"
 #include "ShadowLight.h"
+#include "Camera.h"
 
 const float CAMERA_ANGLE_SHAKE = 10.0f;
 const float CAMERA_ANGLE_OFFSET = 20.0f;
@@ -35,10 +35,10 @@ struct CameraAnimation
 class Disaster
 {
 public:
-	Disaster(Map* map, Player* player, sf::View view, ShadowLight* light, sf::Texture& ghostTexture);
+	Disaster(Map* map, Player* player, Camera* camera, ShadowLight* light, sf::Texture& ghostTexture);
 
 	void MakeRandomDisaster(sf::Vector2f playerCoord, bool isPlayerMovementToRight);
-	void FallingStone(float dTime, sf::RenderWindow& window);
+	void FallingStone(float dTime, sf::RenderWindow& windows, sf::Vector2f playerCoord);
 	void Shake(float dTime, sf::RenderWindow& window);
 	void DoTurningOnTheLight();
 	void MoveGhost(sf::RenderTexture& castTexture);
@@ -55,8 +55,8 @@ private:
 	void FindSuitablesStonesForFall(sf::Vector2i tileCoordOfRightBottomRect, sf::Vector2i tileCoordOfLeftTopRect);
 	void CheckStoneAroundFallingStone(sf::Vector2i coordOfStone);
 	void CreateVectorOfStones(sf::Vector2i tileCoordOfRightBottomRect, sf::Vector2i tileCoordOfLeftTopRect);
-	void EnumerationStones();
-	void EnumerationStonesForNextIteration();
+	void EnumerationStones(sf::Vector2f playerCoord);
+	void EnumerationStonesForNextIteration(sf::Vector2f playerCoord);
 
 	float RandomAngleForShake();
 	void SetParamsForShake(float shakingPower, float maxTime);
@@ -69,9 +69,10 @@ private:
 	Map* m_map;
 	Player* m_player;
 	ShadowLight* m_light;
-	sf::View m_view;
+	Camera* m_camera;
 
 	sf::Vector2f centerView;
+	sf::Vector2f viewPosition;
 
 	int countOfFallingStone = 0;
 
@@ -93,7 +94,7 @@ private:
 	bool isLightWork = true;
 
 	sf::Clock timerForDisaster;
-	bool isFirstDisaster = true;
+	bool isFirstDisaster = false;
 	bool isNextDisaster = false;
 
 	std::map<TypeOfDisaster, int> tableOFWeightOfDisaster;
@@ -104,4 +105,6 @@ private:
 	sf::IntRect ghostIntRect;
 	float speedForGhost = 10.0f;
 	bool isGhostMove = false;
+
+	bool isShake = false;
 };

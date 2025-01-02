@@ -1,13 +1,13 @@
 #include "Disaster.h"
 
-Disaster::Disaster(Map* map, Player* player, sf::View view, ShadowLight* light, sf::Texture& newGhostTexture)
+Disaster::Disaster(Map* map, Player* player, Camera* camera, ShadowLight* light, sf::Texture& newGhostTexture)
 {
 	MakeTableOfWeight();
 	m_map = map;
 	m_player = player;
 	m_light = light;
-	m_view = m_view;
-	centerView = view.getCenter();
+	m_camera = camera;
+	centerView = m_camera->GetViewCenter();
 
 	isLightWork = true;
 	isGhostMove = false;
@@ -36,6 +36,16 @@ void Disaster::MakeRandomDisaster(sf::Vector2f playerCoord, bool isPlayerMovemen
 	//	}
 	//}
 
+	if (timerForDisaster.getElapsedTime().asSeconds() > 5)
+	{
+		if (isFirstDisaster)
+		{
+			return;
+		}
+		//DoSiren();
+		isFirstDisaster = true;
+	}
+
 	//if (timerForDisaster.getElapsedTime().asSeconds() < 12)
 	//{
 	//	if (isNextDisaster || !isFirstDisaster)
@@ -57,7 +67,7 @@ void Disaster::MakeRandomDisaster(sf::Vector2f playerCoord, bool isPlayerMovemen
 	//	}
 	//}
 	//DoRockfall(playerCoord, isPlayerMovementToRight);
-	DoGhost(playerCoord);
+	//DoGhost(playerCoord);
 	//DoSiren();
 	//DoTurningOffTheLight();
 	//WriteDisaster(TypeOfDisaster::TurningOfTheLight, playerCoord, isPlayerMovementToRight);
@@ -150,10 +160,12 @@ void Disaster::Shake(float dTime, sf::RenderWindow& window)
 {
 	if (m_animation.current >= m_animation.max)
 	{
-		m_view.reset(sf::FloatRect({ 0.f, 0.f }, { WINDOW_WIDTH, WINDOW_HEIGHT }));
-		window.setView(m_view);
+		isShake = false;
+		//m_camera->ResetView();
 		return;
 	}
+
+	isShake = true;
 
 	double angle = CAMERA_ANGLE_SHAKE * m_animation.shakingPower * RandomAngleForShake();
 
@@ -161,9 +173,7 @@ void Disaster::Shake(float dTime, sf::RenderWindow& window)
 	offset.x = CAMERA_ANGLE_OFFSET * m_animation.shakingPower * RandomAngleForShake();
 	offset.y = CAMERA_ANGLE_OFFSET * m_animation.shakingPower * RandomAngleForShake();
 
-	m_view.setRotation(angle);
-	m_view.setCenter(m_view.getCenter());
-	window.setView(m_view);
+	m_camera->SetAngleAndCenterForShake(angle, offset);
 
 	m_animation.current += sf::seconds(dTime);
 
@@ -179,7 +189,6 @@ void Disaster::CheckStoneAroundFallingStone(sf::Vector2i coordOfStone)
 	{
 		countOfFallingStone++;
 		stones.push_back(std::pair(sf::Vector2i{coordOfStone.x, coordOfStone.y + 1}, false));
-		//m_map->ChangeColorOfTile(coordOfStone.x * HEIGHT_MAP + coordOfStone.y + 1);
 	}
 
 	if (coordOfStone.x * HEIGHT_MAP + coordOfStone.y - 1 > 0 &&
@@ -188,7 +197,6 @@ void Disaster::CheckStoneAroundFallingStone(sf::Vector2i coordOfStone)
 	{
 		countOfFallingStone++;
 		stones.push_back(std::pair(sf::Vector2i{coordOfStone.x, coordOfStone.y - 1}, false));
-		//m_map->ChangeColorOfTile(coordOfStone.x * HEIGHT_MAP + coordOfStone.y - 1);
 	}
 
 	if ((coordOfStone.x + 1) * HEIGHT_MAP + coordOfStone.y < WIDTH_MAP * HEIGHT_MAP &&
@@ -197,7 +205,6 @@ void Disaster::CheckStoneAroundFallingStone(sf::Vector2i coordOfStone)
 	{
 		countOfFallingStone++;
 		stones.push_back(std::pair(sf::Vector2i{coordOfStone.x + 1, coordOfStone.y}, false));
-		//m_map->ChangeColorOfTile((coordOfStone.x + 1) * HEIGHT_MAP + coordOfStone.y);
 	}
 }
 
@@ -261,7 +268,7 @@ void Disaster::CreateVectorOfStones(sf::Vector2i tileCoordOfRightBottomRect, sf:
 	}
 }
 
-void Disaster::EnumerationStones()
+void Disaster::EnumerationStones(sf::Vector2f playerCoord)
 {
 	stonesForNextIteration.clear();
 	for (auto& stone : stones)
@@ -278,7 +285,7 @@ void Disaster::EnumerationStones()
 
 			if (std::find(stones.begin(), stones.end(), std::pair(coordStoneBelow, true)) == stones.end())
 			{
-				m_map->MoveStoneDown({ float(stone.first.x + 1), float(stone.first.y) });
+				m_map->MoveStoneDown({ float(stone.first.x + 1), float(stone.first.y) }, playerCoord);
 				stonesForNextIteration.push_back(std::pair(coordStoneBelow, false));
 			}
 			else
@@ -295,7 +302,7 @@ void Disaster::EnumerationStones()
 	itItStonesNow = false;
 }
 
-void Disaster::EnumerationStonesForNextIteration()
+void Disaster::EnumerationStonesForNextIteration(sf::Vector2f playerCoord)
 {
 	stones.clear();
 	for (auto& stone : stonesForNextIteration)
@@ -313,7 +320,7 @@ void Disaster::EnumerationStonesForNextIteration()
 			if (std::find(stonesForNextIteration.begin(), stonesForNextIteration.end(), std::pair(coordStoneBelow, true)) ==
 				stonesForNextIteration.end())
 			{
-				m_map->MoveStoneDown({ float(stone.first.x + 1), float(stone.first.y) });
+				m_map->MoveStoneDown({ float(stone.first.x + 1), float(stone.first.y) }, playerCoord);
 				stones.push_back(std::pair(coordStoneBelow, false));
 			}
 			else
@@ -330,7 +337,7 @@ void Disaster::EnumerationStonesForNextIteration()
 	itItStonesNow = true;
 }
 
-void Disaster::FallingStone(float dTime, sf::RenderWindow& window)
+void Disaster::FallingStone(float dTime, sf::RenderWindow& window, sf::Vector2f playerCoord)
 {
 	if (countOfFallingStone == 0)
 	{
@@ -382,11 +389,11 @@ void Disaster::FallingStone(float dTime, sf::RenderWindow& window)
 	{
 		if (itItStonesNow)
 		{
-			EnumerationStones();
+			EnumerationStones(playerCoord);
 		}
 		else
 		{
-			EnumerationStonesForNextIteration();
+			EnumerationStonesForNextIteration(playerCoord);
 		}
 		timerForRockfall.restart();
 	}
@@ -421,8 +428,9 @@ void Disaster::DoRockfall(sf::Vector2f playerCoord, bool isPlayerMovementToRight
 
 void Disaster::DoSiren()
 {
-	SetParamsForShake(0.5, 350000);
-	soundOfSiren.play();
+	centerView = m_camera->GetViewCenter();
+	SetParamsForShake(0.5, 6000);
+	//soundOfSiren.play();
 }
 
 void Disaster::DoTurningOffTheLight()

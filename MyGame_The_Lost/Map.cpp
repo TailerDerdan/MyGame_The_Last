@@ -7,7 +7,7 @@ Map::Map(const sf::View& view, sf::RenderTexture& castTexture, sf::Texture& text
 	textureOfCave = textureOfCaveOuter;
 	teamOfPlayer_texture = textureOfHole;
 
-	coordPlayer = { 10.0f, 60.0f };
+	coordPlayer = { 15.0f, 13.0f };
 
 	MakeMap(view, castTexture);
 
@@ -337,10 +337,10 @@ void Map::MakeMap(const sf::View& view, sf::RenderTexture& castTexture)
 		GenerateRandomWater(10);
 	}
 
-	generatedMap[coordPlayer.x][coordPlayer.y] = 0;
-	generatedMap[coordPlayer.x][coordPlayer.y + 1] = 0;
-	generatedMap[coordPlayer.x + 1][coordPlayer.y] = 0;
-	generatedMap[coordPlayer.x + 1][coordPlayer.y + 1] = 0;
+	generatedMap[coordPlayer.y][coordPlayer.x] = 0;
+	generatedMap[coordPlayer.y][coordPlayer.x + 1] = 0;
+	generatedMap[coordPlayer.y + 1][coordPlayer.x] = 0;
+	generatedMap[coordPlayer.y + 1][coordPlayer.x + 1] = 0;
 
 	CreatePortalToNextLevel();
 
@@ -636,13 +636,21 @@ void Map::DeleteStone(int numberOfTile, sf::Vector2f coordOfTile)
 	isTimerForDeleteStoneRun = false;
 }
 
-void Map::MoveStoneDown(sf::Vector2f coordOfTile)
+void Map::MoveStoneDown(sf::Vector2f coordOfTile, sf::Vector2f playerCoord)
 {
 	if (coordOfTile.x == WIDTH_MAP)
 	{
 		generatedMap[WIDTH_MAP - 1][HEIGHT_MAP - 1] = TypeTile::Stone;
 		return;
 	}
+
+	//sf::Vector2f playerCoordInTile = 
+
+	if (coordOfTile == playerCoord)
+	{
+
+	}
+
 	generatedMap[coordOfTile.x][coordOfTile.y] = generatedMap[coordOfTile.x - 1][coordOfTile.y];
 	generatedMap[coordOfTile.x - 1][coordOfTile.y] = TypeTile::Wall;
 }
