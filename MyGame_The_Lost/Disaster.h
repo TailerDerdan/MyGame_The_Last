@@ -39,7 +39,7 @@ public:
 
 	void MakeRandomDisaster(sf::Vector2f playerCoord, bool isPlayerMovementToRight);
 	void FallingStone(float dTime, sf::RenderWindow& window);
-	void Shake(float dTime, sf::RenderWindow& window);
+	void Shake(float dTime, sf::RenderWindow& window, sf::View view);
 	void DoTurningOnTheLight();
 	void MoveGhost(sf::RenderTexture& castTexture);
 
@@ -69,7 +69,6 @@ private:
 	Map* m_map;
 	Player* m_player;
 	ShadowLight* m_light;
-	sf::View m_view;
 
 	sf::Vector2f centerView;
 

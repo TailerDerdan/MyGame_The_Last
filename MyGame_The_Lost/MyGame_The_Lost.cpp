@@ -121,7 +121,7 @@ int main()
         camera->renderTextureForLight.draw(light.blocks);
 
         disasters->FallingStone(deltaTimeForMovement, camera->m_window);
-        disasters->Shake(deltaTimeForMovement, camera->m_window);
+        disasters->Shake(deltaTimeForMovement, camera->m_window, camera->GetView());
         disasters->DoTurningOnTheLight();
         disasters->MoveGhost(camera->castTexture);
 

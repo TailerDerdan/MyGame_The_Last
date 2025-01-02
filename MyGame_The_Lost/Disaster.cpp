@@ -6,7 +6,6 @@ Disaster::Disaster(Map* map, Player* player, sf::View view, ShadowLight* light, 
 	m_map = map;
 	m_player = player;
 	m_light = light;
-	m_view = m_view;
 	centerView = view.getCenter();
 
 	isLightWork = true;
@@ -57,8 +56,8 @@ void Disaster::MakeRandomDisaster(sf::Vector2f playerCoord, bool isPlayerMovemen
 	//	}
 	//}
 	//DoRockfall(playerCoord, isPlayerMovementToRight);
-	DoGhost(playerCoord);
-	//DoSiren();
+	//DoGhost(playerCoord);
+	DoSiren();
 	//DoTurningOffTheLight();
 	//WriteDisaster(TypeOfDisaster::TurningOfTheLight, playerCoord, isPlayerMovementToRight);
 }
@@ -70,7 +69,6 @@ void Disaster::WriteDisaster(TypeOfDisaster disaster, sf::Vector2f playerCoord, 
 	case None:
 		break;
 	case Rockfall:
-		//std::cout << "Rockfall" << std::endl;
 		DoRockfall(playerCoord, isPlayerMovementToRight);
 		timerForDisaster.restart();
 		isFirstDisaster = false;
@@ -78,7 +76,6 @@ void Disaster::WriteDisaster(TypeOfDisaster disaster, sf::Vector2f playerCoord, 
 		m_player->ChangeFearLevel(20.f);
 		break;
 	case Siren:
-		//std::cout << "Siren" << std::endl;
 		DoSiren();
 		timerForDisaster.restart();
 		isFirstDisaster = false;
@@ -86,7 +83,6 @@ void Disaster::WriteDisaster(TypeOfDisaster disaster, sf::Vector2f playerCoord, 
 		m_player->ChangeFearLevel(35.f);
 		break;
 	case TurningOfTheLight:
-		//std::cout << "TurningOfTheLight" << std::endl;
 		DoTurningOffTheLight();
 		timerForDisaster.restart();
 		isFirstDisaster = false;
@@ -146,12 +142,12 @@ void Disaster::SetParamsForShake(float shakingPower, float maxTime)
 	m_animation.shakingPower += shakingPower;
 }
 
-void Disaster::Shake(float dTime, sf::RenderWindow& window)
+void Disaster::Shake(float dTime, sf::RenderWindow& window, sf::View view)
 {
 	if (m_animation.current >= m_animation.max)
 	{
-		m_view.reset(sf::FloatRect({ 0.f, 0.f }, { WINDOW_WIDTH, WINDOW_HEIGHT }));
-		window.setView(m_view);
+		view.reset(sf::FloatRect({ 0.f, 0.f }, { WINDOW_WIDTH, WINDOW_HEIGHT }));
+		window.setView(view);
 		return;
 	}
 
@@ -161,9 +157,9 @@ void Disaster::Shake(float dTime, sf::RenderWindow& window)
 	offset.x = CAMERA_ANGLE_OFFSET * m_animation.shakingPower * RandomAngleForShake();
 	offset.y = CAMERA_ANGLE_OFFSET * m_animation.shakingPower * RandomAngleForShake();
 
-	m_view.setRotation(angle);
-	m_view.setCenter(m_view.getCenter());
-	window.setView(m_view);
+	view.setRotation(angle);
+	view.setCenter({ WINDOW_WIDTH / 2 + offset.x, WINDOW_HEIGHT / 2 + offset.y });
+	window.setView(view);
 
 	m_animation.current += sf::seconds(dTime);
 
@@ -422,7 +418,7 @@ void Disaster::DoRockfall(sf::Vector2f playerCoord, bool isPlayerMovementToRight
 void Disaster::DoSiren()
 {
 	SetParamsForShake(0.5, 350000);
-	soundOfSiren.play();
+	//soundOfSiren.play();
 }
 
 void Disaster::DoTurningOffTheLight()
