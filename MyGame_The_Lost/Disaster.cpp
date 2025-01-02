@@ -1,6 +1,6 @@
 #include "Disaster.h"
 
-Disaster::Disaster(Map* map, Player* player, sf::View view, ShadowLight* light, sf::Texture& newGhostTexture)
+Disaster::Disaster(Map* map, Player* player, Camera* camera, ShadowLight* light, sf::Texture& newGhostTexture)
 {
 	MakeTableOfWeight();
 	m_map = map;
@@ -34,6 +34,16 @@ void Disaster::MakeRandomDisaster(sf::Vector2f playerCoord, bool isPlayerMovemen
 	//		return;
 	//	}
 	//}
+
+	if (timerForDisaster.getElapsedTime().asSeconds() > 5)
+	{
+		if (isFirstDisaster)
+		{
+			return;
+		}
+		//DoSiren();
+		isFirstDisaster = true;
+	}
 
 	//if (timerForDisaster.getElapsedTime().asSeconds() < 12)
 	//{
@@ -151,6 +161,8 @@ void Disaster::Shake(float dTime, sf::RenderWindow& window, sf::View view)
 		return;
 	}
 
+	isShake = true;
+
 	double angle = CAMERA_ANGLE_SHAKE * m_animation.shakingPower * RandomAngleForShake();
 
 	sf::Vector2f offset;
@@ -175,7 +187,6 @@ void Disaster::CheckStoneAroundFallingStone(sf::Vector2i coordOfStone)
 	{
 		countOfFallingStone++;
 		stones.push_back(std::pair(sf::Vector2i{coordOfStone.x, coordOfStone.y + 1}, false));
-		//m_map->ChangeColorOfTile(coordOfStone.x * HEIGHT_MAP + coordOfStone.y + 1);
 	}
 
 	if (coordOfStone.x * HEIGHT_MAP + coordOfStone.y - 1 > 0 &&
@@ -184,7 +195,6 @@ void Disaster::CheckStoneAroundFallingStone(sf::Vector2i coordOfStone)
 	{
 		countOfFallingStone++;
 		stones.push_back(std::pair(sf::Vector2i{coordOfStone.x, coordOfStone.y - 1}, false));
-		//m_map->ChangeColorOfTile(coordOfStone.x * HEIGHT_MAP + coordOfStone.y - 1);
 	}
 
 	if ((coordOfStone.x + 1) * HEIGHT_MAP + coordOfStone.y < WIDTH_MAP * HEIGHT_MAP &&
@@ -193,7 +203,6 @@ void Disaster::CheckStoneAroundFallingStone(sf::Vector2i coordOfStone)
 	{
 		countOfFallingStone++;
 		stones.push_back(std::pair(sf::Vector2i{coordOfStone.x + 1, coordOfStone.y}, false));
-		//m_map->ChangeColorOfTile((coordOfStone.x + 1) * HEIGHT_MAP + coordOfStone.y);
 	}
 }
 
@@ -257,7 +266,7 @@ void Disaster::CreateVectorOfStones(sf::Vector2i tileCoordOfRightBottomRect, sf:
 	}
 }
 
-void Disaster::EnumerationStones()
+void Disaster::EnumerationStones(sf::Vector2f playerCoord)
 {
 	stonesForNextIteration.clear();
 	for (auto& stone : stones)
@@ -274,7 +283,7 @@ void Disaster::EnumerationStones()
 
 			if (std::find(stones.begin(), stones.end(), std::pair(coordStoneBelow, true)) == stones.end())
 			{
-				m_map->MoveStoneDown({ float(stone.first.x + 1), float(stone.first.y) });
+				m_map->MoveStoneDown({ float(stone.first.x + 1), float(stone.first.y) }, playerCoord);
 				stonesForNextIteration.push_back(std::pair(coordStoneBelow, false));
 			}
 			else
@@ -291,7 +300,7 @@ void Disaster::EnumerationStones()
 	itItStonesNow = false;
 }
 
-void Disaster::EnumerationStonesForNextIteration()
+void Disaster::EnumerationStonesForNextIteration(sf::Vector2f playerCoord)
 {
 	stones.clear();
 	for (auto& stone : stonesForNextIteration)
@@ -309,7 +318,7 @@ void Disaster::EnumerationStonesForNextIteration()
 			if (std::find(stonesForNextIteration.begin(), stonesForNextIteration.end(), std::pair(coordStoneBelow, true)) ==
 				stonesForNextIteration.end())
 			{
-				m_map->MoveStoneDown({ float(stone.first.x + 1), float(stone.first.y) });
+				m_map->MoveStoneDown({ float(stone.first.x + 1), float(stone.first.y) }, playerCoord);
 				stones.push_back(std::pair(coordStoneBelow, false));
 			}
 			else
@@ -326,7 +335,7 @@ void Disaster::EnumerationStonesForNextIteration()
 	itItStonesNow = true;
 }
 
-void Disaster::FallingStone(float dTime, sf::RenderWindow& window)
+void Disaster::FallingStone(float dTime, sf::RenderWindow& window, sf::Vector2f playerCoord)
 {
 	if (countOfFallingStone == 0)
 	{
@@ -378,11 +387,11 @@ void Disaster::FallingStone(float dTime, sf::RenderWindow& window)
 	{
 		if (itItStonesNow)
 		{
-			EnumerationStones();
+			EnumerationStones(playerCoord);
 		}
 		else
 		{
-			EnumerationStonesForNextIteration();
+			EnumerationStonesForNextIteration(playerCoord);
 		}
 		timerForRockfall.restart();
 	}

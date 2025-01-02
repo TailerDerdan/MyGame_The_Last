@@ -71,7 +71,8 @@ public:
 
 	Player(Map* map, EndGame* end, sf::Vector2f viewPosition, sf::RenderTexture& castTexture);
 
-	void Update(sf::RenderTexture& castTexture, sf::RenderTexture& renderTextureForPlayerState, const sf::View& view, float deltaTimeForMovement, sf::RenderWindow& window, Flower* flower);
+	void Update(sf::RenderTexture& castTexture, sf::RenderTexture& renderTextureForPlayerState, const sf::View& view, 
+		float deltaTimeForMovement, sf::RenderWindow& window, Flower* flower);
 
 	void UpdateMovement(PlayerMovement& movement);
 	void UpdateMouseCoord(sf::Vector2f mouseCoord);

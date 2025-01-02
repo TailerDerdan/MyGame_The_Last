@@ -64,7 +64,7 @@ public:
 
 	int GetCountOfStoneNeighbor(sf::Vector2i coordOfTile);
 
-	void MoveStoneDown(sf::Vector2f coordOfTile);
+	void MoveStoneDown(sf::Vector2f coordOfTile, sf::Vector2f playerCoord);
 	void MoveWater();
 	bool CoordInWater(sf::Vector2f coord);
 

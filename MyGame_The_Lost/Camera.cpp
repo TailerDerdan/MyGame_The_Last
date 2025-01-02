@@ -26,9 +26,9 @@ Camera::Camera()
 void Camera::UpdatePostionCamera()
 {
 	sf::Vector2f deltaMove = { positionPlayerAfterMove.x - positionPlayerBeforeMove.x, positionPlayerAfterMove.y - positionPlayerBeforeMove.y };
-	
+
 	m_view.move(deltaMove.x, deltaMove.y);
-	m_view.setCenter(m_player->GetPosition());
+	//m_view.setCenter({ m_player->GetPosition().x + 100, m_player->GetPosition().y + 100 });
 	m_window.setView(m_view);
 
 	viewPosition = m_view.getCenter() - m_view.getSize() / 2.0f;
@@ -78,7 +78,7 @@ void Camera::OnMouseMoved(const sf::Event::MouseMoveEvent& event, sf::Vector2f& 
 	mousePosition = { float(event.x), float(event.y) };
 }
 
-void Camera::EventHandler(sf::Event& event, sf::Vector2f& mouseCoords, bool& isMouseMove, Disaster* disasters)
+void Camera::EventHandler(sf::Event& event, sf::Vector2f& mouseCoords, bool& isMouseMove)
 {
 	PlayerHandler();
 
@@ -101,7 +101,7 @@ void Camera::EventHandler(sf::Event& event, sf::Vector2f& mouseCoords, bool& isM
 		case sf::Event::KeyPressed:
 			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
 			{
-				disasters->MakeRandomDisaster(m_player->GetPosition(), m_player->GetDirectionOfMovement());
+				//disasters->MakeRandomDisaster(m_player->GetPosition(), m_player->GetDirectionOfMovement());
 				//light->ChangeWorkingLight();
 			}
 		default:
@@ -119,7 +119,12 @@ sf::Vector2f Camera::GetViewPosition()
 	return { m_view.getCenter().x - m_view.getSize().x / 2, m_view.getCenter().y - m_view.getSize().y / 2 };
 }
 
-void Camera::Update(sf::Vector2f& mouseCoords, bool& isMouseMove, Disaster* disasters)
+sf::Vector2f Camera::GetViewCenter()
+{
+	return m_view.getCenter();
+}
+
+void Camera::Update(sf::Vector2f& mouseCoords, bool& isMouseMove)
 {
 	castTexture.setView(m_view);
 	castTexture.clear();
@@ -133,14 +138,14 @@ void Camera::Update(sf::Vector2f& mouseCoords, bool& isMouseMove, Disaster* disa
 	sf::Event event;
 	while (m_window.pollEvent(event))
 	{
-		EventHandler(event, mouseCoords, isMouseMove, disasters);
+		EventHandler(event, mouseCoords, isMouseMove);
 	}
 }
 
 void Camera::DrawRenderTexture(sf::RenderWindow& window, const sf::Shader& shadowShader, const sf::Shader& corosionShader)
 {
 	window.draw(sf::Sprite(castTexture.getTexture()), &corosionShader);
-	window.draw(sf::Sprite(renderTextureForLight.getTexture()), &shadowShader);
+	//window.draw(sf::Sprite(renderTextureForLight.getTexture()), &shadowShader);
 	//window.draw(sf::Sprite(renderTextureForLight.getTexture()));
 	window.draw(sf::Sprite(renderTextureForPlayerState.getTexture()));
 }
@@ -154,4 +159,18 @@ void Camera::SetPlayer(Player* player)
 sf::View Camera::GetView()
 {
 	return m_view;
+}
+
+void Camera::ResetView()
+{
+	m_view.reset(sf::FloatRect({ 0, 0 }, { WINDOW_WIDTH, WINDOW_HEIGHT }));
+	//UpdatePostionCamera();
+	m_window.setView(m_view);
+}
+
+void Camera::SetAngleAndCenterForShake(float angle, sf::Vector2f offset)
+{
+	m_view.setRotation(angle);
+	m_view.setCenter({ m_view.getCenter().x + offset.x, m_view.getCenter().y + offset.y });
+	m_window.setView(m_view);
 }

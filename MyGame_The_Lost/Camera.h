@@ -1,7 +1,6 @@
 #pragma once
 #include "includes.h"
 #include "Player.h"
-#include "Disaster.h"
 
 const float SPEED_CAMERA = 4.0f;
 
@@ -16,8 +15,9 @@ public:
 
 	Camera();
 
-	void Update(sf::Vector2f& mouseCoords, bool& isMouseMove, Disaster* disasters);
+	void Update(sf::Vector2f& mouseCoords, bool& isMouseMove);
 	sf::Vector2f GetViewPosition();
+	sf::Vector2f GetViewCenter();
 
 	void DrawRenderTexture(sf::RenderWindow& window, const sf::Shader& shadowShader, const sf::Shader& corosionShader);
 
@@ -28,10 +28,13 @@ public:
 	void SetPlayer(Player* player);
 	sf::View GetView();
 
+	void ResetView();
+	void SetAngleAndCenterForShake(float angle, sf::Vector2f offset);
+
 private:
 	void OnMousePressed(const sf::Event::MouseButtonEvent& event, sf::Vector2f& mousePosition);
 	void OnMouseMoved(const sf::Event::MouseMoveEvent& event, sf::Vector2f& mousePosition);
-	void EventHandler(sf::Event& event, sf::Vector2f& mouseCoords, bool& isMouseMove, Disaster* disasters);
+	void EventHandler(sf::Event& event, sf::Vector2f& mouseCoords, bool& isMouseMove);
 
 	void PlayerHandler();
 

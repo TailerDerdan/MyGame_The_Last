@@ -76,7 +76,7 @@ int main()
     bool isFirstTimeOfSpreadLight = true;
     bool isCorrosion = false;
 
-    Disaster* disasters = new Disaster(map, player, camera->GetView(), light.light, textureOfGhost);
+    Disaster* disasters = new Disaster(map, player, camera, light.light, textureOfGhost);
     Flower* flower = new Flower(map, textureOfFlower);
 
     while (camera->m_window.isOpen())
@@ -98,10 +98,10 @@ int main()
             continue;
         }
 
-        //disasters->MakeRandomDisaster(player->GetPosition(), player->GetDirectionOfMovement());
+        disasters->MakeRandomDisaster(player->GetPosition(), player->GetDirectionOfMovement());
         float deltaTimeForMovement = clock.restart().asSeconds();
         
-        camera->Update(mouseCoords, isMouseMove, disasters);
+        camera->Update(mouseCoords, isMouseMove);
         camera->SetPlayerCoordsBeforeMove(player->GetPosition());
         map->MoveWater();
 
@@ -135,6 +135,8 @@ int main()
         corosionShader.setUniform("erosion_max_offset", 1.0f);
 
         shadowShader.setUniform("mousePosition", player->GetPosition() - camera->GetViewPosition());
+
+        //std::cout << camera->GetViewPosition().x << " " << camera->GetViewPosition().y << " main loop" << std::endl;
 
         redrawFrame(camera->m_window, map, camera, shadowShader, light.blocks, corosionShader);
 
