@@ -1,13 +1,15 @@
 #pragma once
 #include "includes.h"
 #include "ShadowLight.h"
-#include "Camera.h"
+#include "Player.h"
 
 const float CAMERA_ANGLE_SHAKE = 10.0f;
 const float CAMERA_ANGLE_OFFSET = 20.0f;
 
 const float MAX_SPEED_GHOST = 20.0f;
 const float MIN_SPEED_GHOST = 10.0f;
+
+const float DAMAGE_FOR_PLAYER = 10.0f;
 
 enum TypeOfDisaster
 {
@@ -35,10 +37,10 @@ struct CameraAnimation
 class Disaster
 {
 public:
-	Disaster(Map* map, Player* player, Camera* camera, ShadowLight* light, sf::Texture& ghostTexture);
+	Disaster(Map* map, Player* player, ShadowLight* light, sf::Texture& ghostTexture);
 
 	void MakeRandomDisaster(sf::Vector2f playerCoord, bool isPlayerMovementToRight);
-	void FallingStone(float dTime, sf::RenderWindow& window);
+	void FallingStone(float dTime, sf::RenderWindow& window, sf::Vector2f playerCoord);
 	void Shake(float dTime, sf::RenderWindow& window, sf::View view);
 	void DoTurningOnTheLight();
 	void MoveGhost(sf::RenderTexture& castTexture);

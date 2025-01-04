@@ -28,7 +28,6 @@ void Camera::UpdatePostionCamera()
 	sf::Vector2f deltaMove = { positionPlayerAfterMove.x - positionPlayerBeforeMove.x, positionPlayerAfterMove.y - positionPlayerBeforeMove.y };
 
 	m_view.move(deltaMove.x, deltaMove.y);
-	//m_view.setCenter({ m_player->GetPosition().x + 100, m_player->GetPosition().y + 100 });
 	m_window.setView(m_view);
 
 	viewPosition = m_view.getCenter() - m_view.getSize() / 2.0f;
@@ -78,7 +77,7 @@ void Camera::OnMouseMoved(const sf::Event::MouseMoveEvent& event, sf::Vector2f& 
 	mousePosition = { float(event.x), float(event.y) };
 }
 
-void Camera::EventHandler(sf::Event& event, sf::Vector2f& mouseCoords, bool& isMouseMove)
+void Camera::EventHandler(sf::Event& event, sf::Vector2f& mouseCoords, bool& isMouseMove, Disaster* disasters)
 {
 	PlayerHandler();
 
@@ -101,7 +100,7 @@ void Camera::EventHandler(sf::Event& event, sf::Vector2f& mouseCoords, bool& isM
 		case sf::Event::KeyPressed:
 			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
 			{
-				//disasters->MakeRandomDisaster(m_player->GetPosition(), m_player->GetDirectionOfMovement());
+				disasters->MakeRandomDisaster(m_player->GetPosition(), m_player->GetDirectionOfMovement());
 				//light->ChangeWorkingLight();
 			}
 		default:
@@ -124,7 +123,7 @@ sf::Vector2f Camera::GetViewCenter()
 	return m_view.getCenter();
 }
 
-void Camera::Update(sf::Vector2f& mouseCoords, bool& isMouseMove)
+void Camera::Update(sf::Vector2f& mouseCoords, bool& isMouseMove, Disaster* disasters)
 {
 	castTexture.setView(m_view);
 	castTexture.clear();
@@ -138,7 +137,7 @@ void Camera::Update(sf::Vector2f& mouseCoords, bool& isMouseMove)
 	sf::Event event;
 	while (m_window.pollEvent(event))
 	{
-		EventHandler(event, mouseCoords, isMouseMove);
+		EventHandler(event, mouseCoords, isMouseMove, disasters);
 	}
 }
 

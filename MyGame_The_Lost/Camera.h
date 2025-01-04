@@ -1,6 +1,7 @@
 #pragma once
 #include "includes.h"
 #include "Player.h"
+#include "Disaster.h"
 
 const float SPEED_CAMERA = 4.0f;
 
@@ -15,7 +16,7 @@ public:
 
 	Camera();
 
-	void Update(sf::Vector2f& mouseCoords, bool& isMouseMove);
+	void Update(sf::Vector2f& mouseCoords, bool& isMouseMove, Disaster* disasters);
 	sf::Vector2f GetViewPosition();
 	sf::Vector2f GetViewCenter();
 
@@ -34,7 +35,7 @@ public:
 private:
 	void OnMousePressed(const sf::Event::MouseButtonEvent& event, sf::Vector2f& mousePosition);
 	void OnMouseMoved(const sf::Event::MouseMoveEvent& event, sf::Vector2f& mousePosition);
-	void EventHandler(sf::Event& event, sf::Vector2f& mouseCoords, bool& isMouseMove);
+	void EventHandler(sf::Event& event, sf::Vector2f& mouseCoords, bool& isMouseMove, Disaster* disasters);
 
 	void PlayerHandler();
 

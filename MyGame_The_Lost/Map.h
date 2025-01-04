@@ -64,7 +64,7 @@ public:
 
 	int GetCountOfStoneNeighbor(sf::Vector2i coordOfTile);
 
-	void MoveStoneDown(sf::Vector2f coordOfTile, sf::Vector2f playerCoord);
+	void MoveStoneDown(sf::Vector2f coordOfTile, sf::Vector2f playerCoord, bool& isPlayerDamaged);
 	void MoveWater();
 	bool CoordInWater(sf::Vector2f coord);
 
@@ -83,7 +83,7 @@ public:
 	bool GetStateTimerForDeleteStone();
 
 private:
-	void FillFromCell(sf::Vector2f& coord, int& radius);
+	void FillLightFromCell(sf::Vector2f& coord, int& radius);
 
 	void SpreadWater(sf::Vector2f centralBlock);
 	void FillWaterFromCell(sf::Vector2f centralBlock, int radius);
@@ -107,11 +107,17 @@ private:
 	void SpreadCoal(sf::Vector2f centralBlock);
 	void GenerateCoal(int countOfIteration);
 
+	int GetCountOfWallNeighborForIce(sf::Vector2i coordOfTile);
+	void SetRandomGenerationForIce();
+	void GetNextIterationForIce();
+	void GenerateIce(int countOfIteration);
+
 	void SetParamsForStone(ParamsForTile params);
 	void SetParamsForWall(ParamsForTile params);
 	void SetParamsForWaterStone(ParamsForTile params);
 	void SetParamsForCoal(ParamsForTile params);
 	void SetParamsForWaterCoal(ParamsForTile params);
+	void SetParamsForIce(ParamsForTile params);
 
 	int Random(int min, int max);
 

@@ -34,7 +34,12 @@ Player::Player(Map* map, EndGame* end, sf::Vector2f viewPosition, sf::RenderText
 
 	timerForErosion.restart();
 
+	timerForSpeed.restart();
+
 	fontForTimer.loadFromFile("../assets/Chava-Regular.otf");
+
+	eatingAngryFlower.openFromFile("../assets/flowerSound/eating_flower_angry.wav");
+	eatingFriendlyFlower.openFromFile("../assets/flowerSound/eating_flower_friendly.wav");
 }
 
 void Player::MakeInitialState()
@@ -307,6 +312,31 @@ float Player::GetModuleVector(const sf::Vector2f& vect)
 
 void Player::PlayerMoveToRightSide(float deltaTimeForMovement, StatePlayerInWater statePlayerForWater)
 {
+	if (timerForSpeed.getElapsedTime().asSeconds() >= 0.8f)
+	{
+		sf::Vector2f bottomBlock = { std::floor(player.getPosition().x / 25), std::floor(player.getPosition().y / 25) + 2 };
+		if (m_map->GetTypeOfTile(int(bottomBlock.y), int(bottomBlock.x)) == TypeTile::Ice)
+		{
+			if (speedRight < MAX_SPEED_ICE)
+			{
+				speedRight += deltaSpeed;
+			}
+		}
+		else
+		{
+			if (speedRight < SPEED_PLAYER_STONE)
+			{
+				speedRight += deltaSpeed;
+			}
+			else
+			{
+				speedRight = SPEED_PLAYER_STONE;
+			}
+		}
+		
+		timerForSpeed.restart();
+	}
+
 	isPlayerMovementToRight = true;
 
 	numberFrameOfMovementLeft = 0;
@@ -320,7 +350,7 @@ void Player::PlayerMoveToRightSide(float deltaTimeForMovement, StatePlayerInWate
 	sf::Vector2f direction = { motion.x / moduleMotion, motion.y / moduleMotion };
 
 	float deltaTime = 0.016;
-	float movementOffset = SPEED_PLAYER * deltaTime;
+	float movementOffset = speedRight * deltaTime;
 
 	if (statePlayerForWater.playerInWaterBottomLeft || statePlayerForWater.playerInWaterBottomRight ||
 		statePlayerForWater.playerInWaterTopLeft || statePlayerForWater.playerInWaterTopRight)
@@ -332,6 +362,7 @@ void Player::PlayerMoveToRightSide(float deltaTimeForMovement, StatePlayerInWate
 
 	if (std::abs(endPoint.x - positionPlayer.x) <= 1 || !CanPlayerPass(positionPlayer + newDirection, SideForChechiking::Right))
 	{
+		speedRight = MIN_SPEED;
 		return;
 	}
 
@@ -341,8 +372,80 @@ void Player::PlayerMoveToRightSide(float deltaTimeForMovement, StatePlayerInWate
 	ApplyToSpriteMovementRight();
 }
 
+void Player::PlayerMoveToRightSideOnIce(float deltaTimeForMovement, StatePlayerInWater statePlayerForWater)
+{
+	if (speedRight <= MIN_SPEED) return;
+	sf::Vector2f bottomBlock = { std::floor(player.getPosition().x / 25), std::floor(player.getPosition().y / 25) + 2 };
+	if (m_map->GetTypeOfTile(int(bottomBlock.y), int(bottomBlock.x)) == TypeTile::Ice)
+	{
+		if (timerForSpeedForDecrease.getElapsedTime().asSeconds() > 1.0f)
+		{
+			speedRight -= deltaSpeed;
+			timerForSpeedForDecrease.restart();
+		}
+
+		isPlayerMovementToRight = true;
+
+		numberFrameOfMovementLeft = 0;
+		timeForMovementLeft = 0;
+
+		sf::Vector2f positionPlayer = player.getPosition();
+		sf::Vector2f endPoint = { WIDTH_TILE * HEIGHT_MAP + 1, positionPlayer.y };
+
+		sf::Vector2f motion = { endPoint.x - positionPlayer.x, endPoint.y - positionPlayer.y };
+		float moduleMotion = GetModuleVector(motion);
+		sf::Vector2f direction = { motion.x / moduleMotion, motion.y / moduleMotion };
+
+		float deltaTime = 0.016;
+		float movementOffset = speedRight * deltaTime;
+
+		if (statePlayerForWater.playerInWaterBottomLeft || statePlayerForWater.playerInWaterBottomRight ||
+			statePlayerForWater.playerInWaterTopLeft || statePlayerForWater.playerInWaterTopRight)
+		{
+			movementOffset = SPEED_PLAYER_FOR_WATER * deltaTime;
+		}
+
+		sf::Vector2f newDirection = { direction.x * movementOffset, direction.y * movementOffset };
+
+		if (std::abs(endPoint.x - positionPlayer.x) <= 1 || !CanPlayerPass(positionPlayer + newDirection, SideForChechiking::Right))
+		{
+			speedRight = MIN_SPEED;
+			return;
+		}
+
+		player.setPosition(positionPlayer + newDirection);
+
+		UpdateFramesMovementRight(deltaTimeForMovement);
+		ApplyToSpriteMovementRight();
+	}
+}
+
 void Player::PlayerMoveToLeftSide(float deltaTimeForMovement, StatePlayerInWater statePlayerForWater)
 {
+	if (timerForSpeed.getElapsedTime().asSeconds() >= 0.8f)
+	{
+		sf::Vector2f bottomBlock = { std::floor(player.getPosition().x / 25), std::floor(player.getPosition().y / 25) + 2 };
+		if (m_map->GetTypeOfTile(int(bottomBlock.y), int(bottomBlock.x)) == TypeTile::Ice)
+		{
+			if (speedLeft < MAX_SPEED_ICE)
+			{
+				speedLeft += deltaSpeed;
+			}
+		}
+		else
+		{
+			if (speedLeft < SPEED_PLAYER_STONE)
+			{
+				speedLeft += deltaSpeed;
+			}
+			else
+			{
+				speedLeft = SPEED_PLAYER_STONE;
+			}
+		}
+		timerForSpeed.restart();
+	}
+
 	isPlayerMovementToRight = false;
 
 	numberFrameOfMovementRight = 0;
@@ -356,7 +459,7 @@ void Player::PlayerMoveToLeftSide(float deltaTimeForMovement, StatePlayerInWater
 	sf::Vector2f direction = { motion.x / moduleMotion, motion.y / moduleMotion };
 
 	float deltaTime = 0.016;
-	float movementOffset = SPEED_PLAYER * deltaTime;
+	float movementOffset = speedLeft * deltaTime;
 
 	if (statePlayerForWater.playerInWaterBottomLeft || statePlayerForWater.playerInWaterBottomRight ||
 		statePlayerForWater.playerInWaterTopLeft || statePlayerForWater.playerInWaterTopRight)
@@ -368,12 +471,65 @@ void Player::PlayerMoveToLeftSide(float deltaTimeForMovement, StatePlayerInWater
 
 	if (std::abs(endPoint.x - positionPlayer.x) <= 1 || !CanPlayerPass(positionPlayer + newDirection, SideForChechiking::Left))
 	{
+		if (speedLeft > MIN_SPEED)
+		{
+			speedLeft -= deltaSpeed;
+		}
 		return;
 	}
+
 	player.setPosition(positionPlayer + newDirection);
 
 	UpdateFramesMovementLeft(deltaTimeForMovement);
 	ApplyToSpriteMovementLeft();
+}
+
+void Player::PlayerMoveToLeftSideOnIce(float deltaTimeForMovement, StatePlayerInWater statePlayerForWater)
+{
+	if (speedLeft <= MIN_SPEED) return;
+	sf::Vector2f bottomBlock = { std::floor(player.getPosition().x / 25), std::floor(player.getPosition().y / 25) + 2 };
+	if (m_map->GetTypeOfTile(int(bottomBlock.y), int(bottomBlock.x)) == TypeTile::Ice)
+	{
+		if (timerForSpeedForDecrease.getElapsedTime().asSeconds() > 1.0f)
+		{
+			speedLeft -= deltaSpeed;
+			timerForSpeedForDecrease.restart();
+		}
+
+		isPlayerMovementToRight = false;
+
+		numberFrameOfMovementRight = 0;
+		timeForMovementRight = 0;
+
+		sf::Vector2f positionPlayer = player.getPosition();
+		sf::Vector2f endPoint = { -1, positionPlayer.y };
+
+		sf::Vector2f motion = { endPoint.x - positionPlayer.x, endPoint.y - positionPlayer.y };
+		float moduleMotion = GetModuleVector(motion);
+		sf::Vector2f direction = { motion.x / moduleMotion, motion.y / moduleMotion };
+
+		float deltaTime = 0.016;
+		float movementOffset = speedLeft * deltaTime;
+
+		if (statePlayerForWater.playerInWaterBottomLeft || statePlayerForWater.playerInWaterBottomRight ||
+			statePlayerForWater.playerInWaterTopLeft || statePlayerForWater.playerInWaterTopRight)
+		{
+			movementOffset = SPEED_PLAYER_FOR_WATER * deltaTime;
+		}
+
+		sf::Vector2f newDirection = { direction.x * movementOffset, direction.y * movementOffset };
+
+		if (std::abs(endPoint.x - positionPlayer.x) <= 1 || !CanPlayerPass(positionPlayer + newDirection, SideForChechiking::Left))
+		{
+			speedLeft = MIN_SPEED;
+			return;
+		}
+
+		player.setPosition(positionPlayer + newDirection);
+
+		UpdateFramesMovementLeft(deltaTimeForMovement);
+		ApplyToSpriteMovementLeft();
+	}
 }
 
 void Player::PlayerMoveToBottomSide(StatePlayerInWater statePlayerForWater)
@@ -490,10 +646,26 @@ void Player::Update(sf::RenderTexture& castTexture, sf::RenderTexture& renderTex
 	if (m_movement.isRight && !isBadState)
 	{
 		PlayerMoveToRightSide(deltaTimeForMovement, statePlayerInWater);
+		speedLeft = MIN_SPEED;
+	}
+	else
+	{
+		if (!isBadState)
+		{
+			PlayerMoveToRightSideOnIce(deltaTimeForMovement, statePlayerInWater);
+		}
 	}
 	if (m_movement.isLeft && !isBadState)
 	{
 		PlayerMoveToLeftSide(deltaTimeForMovement, statePlayerInWater);
+		speedRight = MIN_SPEED;
+	}
+	else
+	{
+		if (!isBadState)
+		{
+			PlayerMoveToLeftSideOnIce(deltaTimeForMovement, statePlayerInWater);
+		}
 	}
 	if (m_movement.isTop && !m_movement.isBottom && !isBadState)
 	{
@@ -536,12 +708,25 @@ void Player::Update(sf::RenderTexture& castTexture, sf::RenderTexture& renderTex
 			isNextLevel = true;
 		}
 	}
-	if (flower->IsCoordInAngryFlower(player.getPosition(), firstCoordForCorrosion.x))
+	if (flower->IsCoordInAngryFlower(player.getPosition(), firstCoordForCorrosion.x, isAngryFlower))
 	{
+		if (isAngryFlower)
+		{
+			eatingAngryFlower.play();
+			ChangeFearLevel(20);
+			ChangeHpLevel(-20);
+			ChangeWaterLevel(-15);
+			isAngryFlower = false;
+		}
 		isBadState = true;
 	}
-
-	std::cout << std::floor(player.getPosition().x / 25) << " " << std::floor(player.getPosition().y / 25) << " player" << std::endl;
+	if (flower->IsCoordInFriendlyFlower(player.getPosition()))
+	{
+		eatingFriendlyFlower.play();
+		ChangeFearLevel(-fearLevel);
+		ChangeHpLevel(MAX_HP * 0.25);
+		ChangeWaterLevel(20);
+	}
 
 	ChangeFirstCoordForCorosion();
 	UpdateRectsOfStates(view.getCenter() - view.getSize() / 2.0f, renderTextureForPlayerState);
@@ -684,12 +869,20 @@ void Player::UpdateRectsOfStates(sf::Vector2f viewPosition, sf::RenderTexture& c
 		{
 			oxygenLevel -= 2.5f;
 		}
+		if (oxygenLevel < MIN_OXYGEN_LEVEL)
+		{
+			oxygenLevel = MIN_OXYGEN_LEVEL;
+		}
 	}
 	else
 	{
 		if (oxygenLevel < MAX_OXYGEN_LEVEL)
 		{
 			oxygenLevel += 5.f;
+		}
+		if (oxygenLevel > MAX_OXYGEN_LEVEL)
+		{
+			oxygenLevel = MAX_OXYGEN_LEVEL;
 		}
 	}
 
@@ -700,12 +893,20 @@ void Player::UpdateRectsOfStates(sf::Vector2f viewPosition, sf::RenderTexture& c
 		{
 			waterLevel += 3.0f;
 		}
+		if (waterLevel > MAX_WATER_LEVEL)
+		{
+			waterLevel = MAX_WATER_LEVEL;
+		}
 	}
 	else
 	{
 		if (waterLevel > MIN_WATER_LEVEL)
 		{
 			waterLevel -= 0.1f;
+		}
+		if (waterLevel < MIN_WATER_LEVEL)
+		{
+			waterLevel = MIN_WATER_LEVEL;
 		}
 	}
 
@@ -715,6 +916,10 @@ void Player::UpdateRectsOfStates(sf::Vector2f viewPosition, sf::RenderTexture& c
 		{
 			hp -= 2.5f;
 		}
+		if (hp < MIN_HP)
+		{
+			hp = MIN_HP;
+		}
 	}
 
 	if (waterLevel == MIN_WATER_LEVEL)
@@ -723,11 +928,19 @@ void Player::UpdateRectsOfStates(sf::Vector2f viewPosition, sf::RenderTexture& c
 		{
 			hp -= 0.3f;
 		}
+		if (hp < MIN_HP)
+		{
+			hp = MIN_HP;
+		}
 	}
 
 	if (fearLevel > MIN_FEAR_LEVEL)
 	{
-		fearLevel -= 1.0f;
+		fearLevel -= 0.4f;
+	}
+	if (fearLevel < MIN_FEAR_LEVEL)
+	{
+		fearLevel = MIN_FEAR_LEVEL;
 	}
 
 	rectForHp.setSize({ hp * KOEF_WIDTH_RECT_STATE_PLAYER, HEIGHT_RECT_STATE_PLAYER });
@@ -750,20 +963,40 @@ void Player::SetIsNextLevel(bool state)
 
 void Player::ChangeFearLevel(float delta)
 {
-	if (delta < 0)
+	fearLevel += delta;
+	if (fearLevel < MIN_FEAR_LEVEL)
 	{
-		if (fearLevel >= MIN_FEAR_LEVEL)
-		{
-			fearLevel -= delta;
-		}
+		fearLevel = MIN_FEAR_LEVEL;
 	}
-
-	if (delta > 0)
+	if (fearLevel > MAX_FEAR_LEVEL)
 	{
-		if (fearLevel <= MAX_FEAR_LEVEL)
-		{
-			fearLevel += delta;
-		}
+		fearLevel = MAX_FEAR_LEVEL;
+	}
+}
+
+void Player::ChangeHpLevel(float delta)
+{
+	hp += delta;
+	if (hp < MIN_HP)
+	{
+		hp = MIN_HP;
+	}
+	if (hp > MAX_HP)
+	{
+		hp = MAX_HP;
+	}
+}
+
+void Player::ChangeWaterLevel(float delta)
+{
+	waterLevel += delta;
+	if (waterLevel < MIN_WATER_LEVEL)
+	{
+		waterLevel = MIN_WATER_LEVEL;
+	}
+	if (waterLevel > MAX_WATER_LEVEL)
+	{
+		waterLevel = MAX_WATER_LEVEL;
 	}
 }
 

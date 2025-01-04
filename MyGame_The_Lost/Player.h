@@ -4,7 +4,7 @@
 #include "EndGame.h"
 #include "Flower.h"
 
-const float SPEED_PLAYER = 7.5f;
+const float SPEED_PLAYER_STONE = 7.5f;
 const float SPEED_PLAYER_FOR_JUMP = 25.0f;
 const float SPEED_PLAYER_FOR_FALL = 10.0f;
 
@@ -29,6 +29,10 @@ const float MIN_WATER_LEVEL = 0.f;
 
 const float MAX_FEAR_LEVEL = 100.f;
 const float MIN_FEAR_LEVEL = 0.f;
+
+const float MAX_SPEED_ICE = 15.f;
+const float MIN_SPEED = 3.5f;
+const float deltaSpeed = 1.f;
 
 const float HEIGHT_RECT_STATE_PLAYER = 100.f;
 const float KOEF_WIDTH_RECT_STATE_PLAYER = 5.f;
@@ -92,6 +96,8 @@ public:
 	void SetIsNextLevel(bool state);
 
 	void ChangeFearLevel(float delta);
+	void ChangeHpLevel(float delta);
+	void ChangeWaterLevel(float delta);
 	
 	sf::Vector2f GetFirstCoordForCorosion();
 	void ChangeFirstCoordForCorosion();
@@ -107,8 +113,10 @@ private:
 
 	void PlayerMoveToTopSide(StatePlayerInWater statePlayerForWater);
 	void PlayerMoveToRightSide(float deltaTimeForMovement, StatePlayerInWater statePlayerForWater);
+	void PlayerMoveToRightSideOnIce(float deltaTimeForMovement, StatePlayerInWater statePlayerForWater);
 	void PlayerMoveToBottomSide(StatePlayerInWater statePlayerForWater);
 	void PlayerMoveToLeftSide(float deltaTimeForMovement, StatePlayerInWater statePlayerForWater);
+	void PlayerMoveToLeftSideOnIce(float deltaTimeForMovement, StatePlayerInWater statePlayerForWater);
 
 	void PlayerDig(sf::Vector2f viewPosition);
 
@@ -169,6 +177,13 @@ private:
 	float oxygenLevel = MAX_OXYGEN_LEVEL;
 	float waterLevel = MAX_WATER_LEVEL;
 	float fearLevel = MIN_FEAR_LEVEL;
+	float speedRight = MIN_SPEED;
+	float speedLeft = MIN_SPEED;
+
+	bool isAngryFlower = false;
+
+	sf::Clock timerForSpeed;
+	sf::Clock timerForSpeedForDecrease;
 
 	sf::Clock timerForUpdateStatePlayer;
 
@@ -191,4 +206,7 @@ private:
 
 	sf::Clock timerForLevel;
 	sf::Font fontForTimer;
+
+	sf::Music eatingAngryFlower;
+	sf::Music eatingFriendlyFlower;
 };

@@ -76,7 +76,7 @@ int main()
     bool isFirstTimeOfSpreadLight = true;
     bool isCorrosion = false;
 
-    Disaster* disasters = new Disaster(map, player, camera, light.light, textureOfGhost);
+    Disaster* disasters = new Disaster(map, player, light.light, textureOfGhost);
     Flower* flower = new Flower(map, textureOfFlower);
 
     while (camera->m_window.isOpen())
@@ -98,14 +98,15 @@ int main()
             continue;
         }
 
-        disasters->MakeRandomDisaster(player->GetPosition(), player->GetDirectionOfMovement());
+        //disasters->MakeRandomDisaster(player->GetPosition(), player->GetDirectionOfMovement());
         float deltaTimeForMovement = clock.restart().asSeconds();
         
-        camera->Update(mouseCoords, isMouseMove);
+        camera->Update(mouseCoords, isMouseMove, disasters);
         camera->SetPlayerCoordsBeforeMove(player->GetPosition());
         map->MoveWater();
 
         map->UpdateMap(camera->GetView(), camera->castTexture);
+        flower->Update();
         flower->DrawFlowers(camera->castTexture);
 
         player->Update(camera->castTexture, camera->renderTextureForPlayerState, camera->GetView(), deltaTimeForMovement, camera->m_window, flower);
@@ -120,7 +121,7 @@ int main()
         MakeLight(light, map, player->GetPosition(), isFirstTimeOfSpreadLight);
         camera->renderTextureForLight.draw(light.blocks);
 
-        disasters->FallingStone(deltaTimeForMovement, camera->m_window);
+        disasters->FallingStone(deltaTimeForMovement, camera->m_window, player->GetPosition());
         disasters->Shake(deltaTimeForMovement, camera->m_window, camera->GetView());
         disasters->DoTurningOnTheLight();
         disasters->MoveGhost(camera->castTexture);

@@ -1,20 +1,19 @@
 #include "Disaster.h"
 
-Disaster::Disaster(Map* map, Player* player, Camera* camera, ShadowLight* light, sf::Texture& newGhostTexture)
+Disaster::Disaster(Map* map, Player* player, ShadowLight* light, sf::Texture& newGhostTexture)
 {
 	MakeTableOfWeight();
 	m_map = map;
 	m_player = player;
 	m_light = light;
-	centerView = view.getCenter();
 
 	isLightWork = true;
 	isGhostMove = false;
 
-	soundOfSiren.openFromFile("../assets/siren.wav");
-	soundOfRockfall.openFromFile("../assets/rockfall.wav");
-	soundOfTurningOn.openFromFile("../assets/turningOn.wav");
-	soundOfTurningOff.openFromFile("../assets/turningOff.wav");
+	soundOfSiren.openFromFile("../assets/disastersSound/siren.wav");
+	soundOfRockfall.openFromFile("../assets/disastersSound/rockfall.wav");
+	soundOfTurningOn.openFromFile("../assets/disastersSound/turningOn.wav");
+	soundOfTurningOff.openFromFile("../assets/disastersSound/turningOff.wav");
 
 	ghostTexture = newGhostTexture;
 	ghostIntRect = { 0, 0, 250, 250 };
@@ -34,16 +33,6 @@ void Disaster::MakeRandomDisaster(sf::Vector2f playerCoord, bool isPlayerMovemen
 	//		return;
 	//	}
 	//}
-
-	if (timerForDisaster.getElapsedTime().asSeconds() > 5)
-	{
-		if (isFirstDisaster)
-		{
-			return;
-		}
-		//DoSiren();
-		isFirstDisaster = true;
-	}
 
 	//if (timerForDisaster.getElapsedTime().asSeconds() < 12)
 	//{
@@ -65,9 +54,9 @@ void Disaster::MakeRandomDisaster(sf::Vector2f playerCoord, bool isPlayerMovemen
 	//		break;
 	//	}
 	//}
-	//DoRockfall(playerCoord, isPlayerMovementToRight);
+	DoRockfall(playerCoord, isPlayerMovementToRight);
 	//DoGhost(playerCoord);
-	DoSiren();
+	//DoSiren();
 	//DoTurningOffTheLight();
 	//WriteDisaster(TypeOfDisaster::TurningOfTheLight, playerCoord, isPlayerMovementToRight);
 }
@@ -185,24 +174,45 @@ void Disaster::CheckStoneAroundFallingStone(sf::Vector2i coordOfStone)
 		std::find(stones.begin(), stones.end(), std::pair(sf::Vector2i{coordOfStone.x, coordOfStone.y + 1}, false)) == stones.end() &&
 		m_map->GetTypeOfTile(coordOfStone.x * HEIGHT_MAP + coordOfStone.y + 1) != TypeTile::Wall)
 	{
-		countOfFallingStone++;
-		stones.push_back(std::pair(sf::Vector2i{coordOfStone.x, coordOfStone.y + 1}, false));
+		if (m_map->GetTypeOfTile(coordOfStone.x * HEIGHT_MAP + coordOfStone.y + 1) == TypeTile::Ice)
+		{
+			m_map->DeleteStone(coordOfStone.x * HEIGHT_MAP + coordOfStone.y + 1, { float(coordOfStone.x), float(coordOfStone.y + 1) });
+		}
+		else
+		{
+			countOfFallingStone++;
+			stones.push_back(std::pair(sf::Vector2i{coordOfStone.x, coordOfStone.y + 1}, false));
+		}
 	}
 
 	if (coordOfStone.x * HEIGHT_MAP + coordOfStone.y - 1 > 0 &&
 		std::find(stones.begin(), stones.end(), std::pair(sf::Vector2i{coordOfStone.x, coordOfStone.y - 1}, false)) == stones.end() &&
 		m_map->GetTypeOfTile(coordOfStone.x * HEIGHT_MAP + coordOfStone.y - 1) != TypeTile::Wall)
 	{
-		countOfFallingStone++;
-		stones.push_back(std::pair(sf::Vector2i{coordOfStone.x, coordOfStone.y - 1}, false));
+		if (m_map->GetTypeOfTile(coordOfStone.x * HEIGHT_MAP + coordOfStone.y - 1) == TypeTile::Ice)
+		{
+			m_map->DeleteStone(coordOfStone.x * HEIGHT_MAP + coordOfStone.y - 1, { float(coordOfStone.x), float(coordOfStone.y - 1) });
+		}
+		else
+		{
+			countOfFallingStone++;
+			stones.push_back(std::pair(sf::Vector2i{coordOfStone.x, coordOfStone.y - 1}, false));
+		}
 	}
 
 	if ((coordOfStone.x + 1) * HEIGHT_MAP + coordOfStone.y < WIDTH_MAP * HEIGHT_MAP &&
 		std::find(stones.begin(), stones.end(), std::pair(sf::Vector2i{coordOfStone.x + 1, coordOfStone.y}, false)) == stones.end() &&
 		m_map->GetTypeOfTile((coordOfStone.x + 1) * HEIGHT_MAP + coordOfStone.y) != TypeTile::Wall)
 	{
-		countOfFallingStone++;
-		stones.push_back(std::pair(sf::Vector2i{coordOfStone.x + 1, coordOfStone.y}, false));
+		if (m_map->GetTypeOfTile((coordOfStone.x + 1) * HEIGHT_MAP + coordOfStone.y) == TypeTile::Ice)
+		{
+			m_map->DeleteStone((coordOfStone.x + 1) * HEIGHT_MAP + coordOfStone.y, { float(coordOfStone.x + 1), float(coordOfStone.y) });
+		}
+		else
+		{
+			countOfFallingStone++;
+			stones.push_back(std::pair(sf::Vector2i{coordOfStone.x + 1, coordOfStone.y}, false));
+		}
 	}
 }
 
@@ -212,8 +222,7 @@ void Disaster::FindSuitablesStonesForFall(sf::Vector2i tileCoordOfRightBottomRec
 	{
 		for (int iterX = tileCoordOfLeftTopRect.x; iterX < tileCoordOfRightBottomRect.x; iterX++)
 		{
-
-			if (m_map->GetTypeOfTile(iterY * HEIGHT_MAP + iterX) == TypeTile::Stone &&
+			if ((m_map->GetTypeOfTile(iterY * HEIGHT_MAP + iterX) != TypeTile::Wall && m_map->GetTypeOfTile(iterY * HEIGHT_MAP + iterX) != TypeTile::Ice) &&
 				std::find(stones.begin(), stones.end(), std::pair(sf::Vector2i{iterY, iterX}, false)) == stones.end() &&
 				m_map->GetCountOfStoneNeighbor({ iterY, iterX }) < 3)
 			{
@@ -235,7 +244,8 @@ void Disaster::CreateVectorOfStones(sf::Vector2i tileCoordOfRightBottomRect, sf:
 	{
 		for (int iterY = tileCoordOfRightBottomRect.y + 20; iterY >= tileCoordOfLeftTopRect.y; iterY--)
 		{
-			if (m_map->GetTypeOfTile(iterY * HEIGHT_MAP + iterX) == TypeTile::Wall) continue;
+			if (m_map->GetTypeOfTile(iterY * HEIGHT_MAP + iterX) == TypeTile::Wall || 
+				m_map->GetTypeOfTile(iterY * HEIGHT_MAP + iterX) == TypeTile::Ice) continue;
 
 			sf::Vector2i coordStone = { iterY, iterX };
 
@@ -269,6 +279,8 @@ void Disaster::CreateVectorOfStones(sf::Vector2i tileCoordOfRightBottomRect, sf:
 void Disaster::EnumerationStones(sf::Vector2f playerCoord)
 {
 	stonesForNextIteration.clear();
+	bool isPlayerDamaged = false;
+	int indexStone = 0;
 	for (auto& stone : stones)
 	{
 		if (!stone.second)
@@ -283,7 +295,14 @@ void Disaster::EnumerationStones(sf::Vector2f playerCoord)
 
 			if (std::find(stones.begin(), stones.end(), std::pair(coordStoneBelow, true)) == stones.end())
 			{
-				m_map->MoveStoneDown({ float(stone.first.x + 1), float(stone.first.y) }, playerCoord);
+				m_map->MoveStoneDown({ float(stone.first.x + 1), float(stone.first.y) }, { playerCoord.x + PLAYER_WIDTH / 2, playerCoord.y }, isPlayerDamaged);
+				if (isPlayerDamaged)
+				{
+					std::vector<std::pair<sf::Vector2i, bool>>::iterator iterForDeleteStone = stones.begin() + indexStone;
+					stones.erase(iterForDeleteStone);
+					m_player->ChangeHpLevel(-DAMAGE_FOR_PLAYER);
+					isPlayerDamaged = false;
+				}
 				stonesForNextIteration.push_back(std::pair(coordStoneBelow, false));
 			}
 			else
@@ -296,6 +315,7 @@ void Disaster::EnumerationStones(sf::Vector2f playerCoord)
 		{
 			stonesForNextIteration.push_back(stone);
 		}
+		indexStone++;
 	}
 	itItStonesNow = false;
 }
@@ -303,6 +323,8 @@ void Disaster::EnumerationStones(sf::Vector2f playerCoord)
 void Disaster::EnumerationStonesForNextIteration(sf::Vector2f playerCoord)
 {
 	stones.clear();
+	bool isPlayerDamaged = false;
+	int indexStone = 0;
 	for (auto& stone : stonesForNextIteration)
 	{
 		if (!stone.second)
@@ -318,7 +340,14 @@ void Disaster::EnumerationStonesForNextIteration(sf::Vector2f playerCoord)
 			if (std::find(stonesForNextIteration.begin(), stonesForNextIteration.end(), std::pair(coordStoneBelow, true)) ==
 				stonesForNextIteration.end())
 			{
-				m_map->MoveStoneDown({ float(stone.first.x + 1), float(stone.first.y) }, playerCoord);
+				m_map->MoveStoneDown({ float(stone.first.x + 1), float(stone.first.y) }, {playerCoord.x + PLAYER_WIDTH / 2, playerCoord.y}, isPlayerDamaged);
+				if (isPlayerDamaged)
+				{
+					std::vector<std::pair<sf::Vector2i, bool>>::iterator iterForDeleteStone = stonesForNextIteration.begin() + indexStone;
+					stonesForNextIteration.erase(iterForDeleteStone);
+					m_player->ChangeHpLevel(-DAMAGE_FOR_PLAYER);
+					isPlayerDamaged = false;
+				}
 				stones.push_back(std::pair(coordStoneBelow, false));
 			}
 			else
@@ -331,6 +360,7 @@ void Disaster::EnumerationStonesForNextIteration(sf::Vector2f playerCoord)
 		{
 			stones.push_back(stone);
 		}
+		indexStone++;
 	}
 	itItStonesNow = true;
 }
@@ -427,7 +457,7 @@ void Disaster::DoRockfall(sf::Vector2f playerCoord, bool isPlayerMovementToRight
 void Disaster::DoSiren()
 {
 	SetParamsForShake(0.5, 350000);
-	//soundOfSiren.play();
+	soundOfSiren.play();
 }
 
 void Disaster::DoTurningOffTheLight()

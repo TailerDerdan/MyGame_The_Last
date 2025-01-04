@@ -26,12 +26,16 @@ public:
 	void MakeRandomGeneration(int countOfFlowerFriendlyBlock, int countOfFlowerAngryBlock);
 	void DrawFlowers(sf::RenderTexture& castTexture);
 
+	void Update();
+
 	bool IsCoordInFriendlyFlower(sf::Vector2f coord);
-	bool IsCoordInAngryFlower(sf::Vector2f coord, float xCoordErosionShader);
+	bool IsCoordInAngryFlower(sf::Vector2f coord, float xCoordErosionShader, bool& isAngryFlower);
 
 private:
 	int Random(int min, int max);
 	std::pair<bool, bool> IsPlaceForFlower(int iterX, int iterY);
+
+	bool IsPointInFlower(sf::Vector2f point, sf::Sprite flower);
 
 private:
 	Map* m_map;

@@ -24,12 +24,13 @@ int Flower::Random(int min, int max)
 std::pair<bool, bool> Flower::IsPlaceForFlower(int iterX, int iterY)
 {
 	if (m_map->GetTypeOfTile(iterX, iterY) == TypeTile::Wall &&
-		m_map->GetTypeOfTile(iterX + 1, iterY) == TypeTile::Stone &&
 		m_map->GetTypeOfTile(iterX - 1, iterY) == TypeTile::Wall &&
 		m_map->GetTypeOfTile(iterX - 1, iterY + 1) == TypeTile::Wall &&
+		m_map->GetTypeOfTile(iterX - 1, iterY - 1) == TypeTile::Wall &&				
 		m_map->GetTypeOfTile(iterX, iterY + 1) == TypeTile::Wall &&
 		m_map->GetTypeOfTile(iterX, iterY - 1) == TypeTile::Wall &&
-		((m_map->GetTypeOfTile(iterX + 1, iterY - 1) == TypeTile::Stone && m_map->GetTypeOfTile(iterX + 1, iterY - 2) == TypeTile::Stone) &&
+		m_map->GetTypeOfTile(iterX + 1, iterY) == TypeTile::Stone &&
+		((m_map->GetTypeOfTile(iterX + 1, iterY - 1) == TypeTile::Stone && m_map->GetTypeOfTile(iterX + 1, iterY - 2) == TypeTile::Stone) ||
 		(m_map->GetTypeOfTile(iterX + 1, iterY + 1) == TypeTile::Stone && m_map->GetTypeOfTile(iterX + 1, iterY + 2) == TypeTile::Stone)))
 	{
 		if ((m_map->GetTypeOfTile(iterX + 1, iterY - 1) == TypeTile::Stone && m_map->GetTypeOfTile(iterX + 1, iterY - 2) == TypeTile::Stone))
@@ -69,13 +70,14 @@ void Flower::MakeRandomGeneration(int countOfFlowerFriendlyBlock, int countOfFlo
 					FlowerSprite flowerSprite;
 					if (randomNumberForTypeFlower > 60)
 					{
+						std::cout << iterX << " " << iterY << " FRIENDLY" << std::endl;
 						flowerType = FlowerType::Friendly;
 						countOfCenterBlockFriendlyFlower--;
 						flowerSprite.sprite.setTexture(m_textureForFlowers);
 					}
 					else
 					{
-						std::cout << iterX << " " << iterY << std::endl;
+						std::cout << iterX << " " << iterY << " ANGRY" << std::endl;
 						flowerType = FlowerType::Angry;
 						countOfCenterBlockAngryFlower--;
 						flowerSprite.sprite.setTexture(m_textureOfFlowerAngry);
@@ -114,15 +116,20 @@ void Flower::MakeRandomGeneration(int countOfFlowerFriendlyBlock, int countOfFlo
 			}
 		}
 	}
+}
 
-	FlowerSprite flowerSprite;
-	flowerSprite.texture = { 0, 0, WIDTH_TILE, HEIGHT_TILE };
-	flowerSprite.sprite.setTexture(m_textureOfFlowerAngry);
-	flowerSprite.sprite.setTextureRect(flowerSprite.texture);
-	flowerSprite.sprite.setPosition({ float(15 * WIDTH_TILE), float(10 * HEIGHT_TILE) });
-	flowerSprite.flowerType = FlowerType::Angry;
-
-	flowersSprite.push_back(flowerSprite);
+void Flower::Update()
+{
+	int index = 0;
+	for (auto& flower : flowersSprite)
+	{
+		if (m_map->GetTypeOfTile(int(std::floor(flower.sprite.getPosition().y / 25) - 1), int(std::floor(flower.sprite.getPosition().x / 25))))
+		{
+			std::vector<FlowerSprite>::iterator iterForDelete = flowersSprite.begin() + index;
+			flowersSprite.erase(iterForDelete);
+		}
+		index++;
+	}
 }
 
 void Flower::DrawFlowers(sf::RenderTexture& castTexture)
@@ -133,7 +140,17 @@ void Flower::DrawFlowers(sf::RenderTexture& castTexture)
 	}
 }
 
-bool Flower::IsCoordInAngryFlower(sf::Vector2f coord, float xCoordErosionShader)
+bool Flower::IsPointInFlower(sf::Vector2f point, sf::Sprite flower)
+{
+	bool isPointMoreX = (point.x >= flower.getPosition().x);
+	bool isPointMoreY = (point.y >= flower.getPosition().y);
+	bool isPointLessWidthFlower = (point.x <= (flower.getPosition().x + flower.getGlobalBounds().width));
+	bool isPointLessHeightFlower = (point.y <= (flower.getPosition().y + flower.getGlobalBounds().height));
+	
+	return (isPointMoreX && isPointMoreY && isPointLessWidthFlower && isPointLessHeightFlower);
+}
+
+bool Flower::IsCoordInAngryFlower(sf::Vector2f coord, float xCoordErosionShader, bool& isAngryFlower)
 {
 	int iterNecessary = -1;
 	bool isFlower = false;
@@ -142,22 +159,54 @@ bool Flower::IsCoordInAngryFlower(sf::Vector2f coord, float xCoordErosionShader)
 		FlowerSprite flower = flowersSprite[iter];
 		if (flower.flowerType == FlowerType::Friendly) continue;
 
-		if (((coord.x >= flower.sprite.getPosition().x && coord.x <= flower.sprite.getPosition().x + flower.sprite.getLocalBounds().width &&
-			coord.y >= flower.sprite.getPosition().y && coord.y <= flower.sprite.getPosition().y + flower.sprite.getLocalBounds().height)) ||
+		sf::Vector2f centerPoint = { coord.x + float(PLAYER_WIDTH) / 2, coord.y + float(PLAYER_HEIGHT) / 2 };
+		sf::Vector2f centerTopPoint = { coord.x + float(PLAYER_WIDTH) / 2, coord.y };
+		sf::Vector2f centerBottomPoint = { coord.x + float(PLAYER_WIDTH) / 2, coord.y + PLAYER_HEIGHT };
+		sf::Vector2f centerRightPoint = { coord.x, coord.y + float(PLAYER_HEIGHT) / 2 };
+		sf::Vector2f centerLeftPoint = { coord.x + PLAYER_WIDTH, coord.y + float(PLAYER_HEIGHT) / 2 };
 
-			((coord.x + PLAYER_WIDTH >= flower.sprite.getPosition().x && coord.x + PLAYER_WIDTH <= flower.sprite.getPosition().x + flower.sprite.getLocalBounds().width &&
-			coord.y + PLAYER_HEIGHT >= flower.sprite.getPosition().y && coord.y + PLAYER_HEIGHT <= flower.sprite.getPosition().y + flower.sprite.getLocalBounds().height)) ||
-			
-			((coord.x + float(WIDTH_TILE) / 2 >= flower.sprite.getPosition().x && coord.x + float(PLAYER_WIDTH) / 2 <= flower.sprite.getPosition().x + flower.sprite.getLocalBounds().width &&
-				coord.y + float(HEIGHT_TILE) / 2 >= flower.sprite.getPosition().y && coord.y + float(PLAYER_HEIGHT) / 2 <= flower.sprite.getPosition().y + flower.sprite.getLocalBounds().height))
-			)
+		if (IsPointInFlower(centerPoint, flower.sprite) || IsPointInFlower(centerTopPoint, flower.sprite) || IsPointInFlower(centerBottomPoint, flower.sprite) ||
+			IsPointInFlower(centerRightPoint, flower.sprite) || IsPointInFlower(centerLeftPoint, flower.sprite))
 		{
+			isFlower = true;
 			if (xCoordErosionShader >= 0.8)
 			{
 				iterNecessary = iter;
 				break;
 			}
+		}
+	}
+
+	if (iterNecessary != -1)
+	{
+		isAngryFlower = true;
+		flowersSprite.erase(std::next(flowersSprite.begin(), iterNecessary));
+	}
+
+	return isFlower;
+}
+
+bool Flower::IsCoordInFriendlyFlower(sf::Vector2f coord)
+{
+	int iterNecessary = -1;
+	bool isFlower = false;
+	for (int iter = 0; iter < flowersSprite.size(); iter++)
+	{
+		FlowerSprite flower = flowersSprite[iter];
+		if (flower.flowerType == FlowerType::Angry) continue;
+
+		sf::Vector2f centerPoint = { coord.x + float(PLAYER_WIDTH) / 2, coord.y + float(PLAYER_HEIGHT) / 2 };
+		sf::Vector2f centerTopPoint = { coord.x + float(PLAYER_WIDTH) / 2, coord.y };
+		sf::Vector2f centerBottomPoint = { coord.x + float(PLAYER_WIDTH) / 2, coord.y + PLAYER_HEIGHT };
+		sf::Vector2f centerRightPoint = { coord.x, coord.y + float(PLAYER_HEIGHT) / 2 };
+		sf::Vector2f centerLeftPoint = { coord.x + PLAYER_WIDTH, coord.y + float(PLAYER_HEIGHT) / 2 };
+
+		if (IsPointInFlower(centerPoint, flower.sprite) || IsPointInFlower(centerTopPoint, flower.sprite) || IsPointInFlower(centerBottomPoint, flower.sprite) ||
+			IsPointInFlower(centerRightPoint, flower.sprite) || IsPointInFlower(centerLeftPoint, flower.sprite))
+		{
+			iterNecessary = iter;
 			isFlower = true;
+			break;
 		}
 	}
 
@@ -167,19 +216,4 @@ bool Flower::IsCoordInAngryFlower(sf::Vector2f coord, float xCoordErosionShader)
 	}
 
 	return isFlower;
-}
-
-bool Flower::IsCoordInFriendlyFlower(sf::Vector2f coord)
-{
-	for (auto& flower : flowersSprite)
-	{
-		if (flower.flowerType == FlowerType::Angry) continue;
-
-		if (coord.x >= flower.sprite.getPosition().x && coord.x <= flower.sprite.getPosition().x + flower.sprite.getLocalBounds().width &&
-			coord.y >= flower.sprite.getPosition().y && coord.y <= flower.sprite.getPosition().y + flower.sprite.getLocalBounds().height)
-		{
-			return true;
-		}
-	}
-	return false;
 }
