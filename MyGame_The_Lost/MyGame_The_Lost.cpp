@@ -153,8 +153,6 @@ int main()
         shadowShader.setUniform("isGhostMove", disasters->GetStateGhost());
 
         redrawFrame(camera->m_window, map, camera, shadowShader, light.blocks, corosionShader);
-
-        camera->m_window.setTitle(std::to_string(1 / deltaTimeForMovement));
     }
 
     return 0;

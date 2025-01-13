@@ -1169,3 +1169,9 @@ void Player::SetStateForKeyE(bool& state)
 {
 	isKeyEPress = state;
 }
+
+void Player::RestartTimers()
+{
+	timerForLevel.restart();
+	timerForGame.restart();
+}
