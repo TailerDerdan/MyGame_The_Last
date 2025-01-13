@@ -3,7 +3,6 @@
 Flower::Flower(Map* map, sf::Texture& textureForFlowers)
 {
 	m_map = map;
-	MakeRandomGeneration(COUNT_FRIENDLY_FLOWER, COUNT_ANGRY_FLOWER);
 	m_textureForFlowers = textureForFlowers;
 	m_textureOfFlowerAngry = textureForFlowers;
 }
@@ -46,13 +45,16 @@ void Flower::MakeRandomGeneration(int countOfFlowerFriendlyBlock, int countOfFlo
 {
 	int countOfCenterBlockFriendlyFlower = countOfFlowerFriendlyBlock;
 	int countOfCenterBlockAngryFlower = countOfFlowerAngryBlock;
+
+	flowersSprite.clear();
+
 	for (int iterX = 1; iterX < WIDTH_MAP - 1; iterX++)
 	{
 		if (countOfCenterBlockFriendlyFlower == 0 || countOfCenterBlockAngryFlower == 0) return;
 
 		for (int iterY = 1; iterY < HEIGHT_MAP - 1; iterY++)
 		{
-			if ((iterX >= -1 && iterX <= 1) || (iterY >= -1 && iterY <= 1) || iterY == HEIGHT_MAP - 1 || iterX == WIDTH_MAP - 1) continue;
+			if ((iterX >= -1 && iterX <= 1) || (iterY >= -1 && iterY <= 1) || iterY >= HEIGHT_MAP - 1 || iterX >= WIDTH_MAP - 1) continue;
 
 			std::pair<bool, bool> stateAboutPositionFlower = IsPlaceForFlower(iterX, iterY);
 			if (stateAboutPositionFlower.first)
@@ -116,6 +118,13 @@ void Flower::MakeRandomGeneration(int countOfFlowerFriendlyBlock, int countOfFlo
 			}
 		}
 	}
+	FlowerSprite flowerSprite;
+	flowerSprite.texture = { 0, 0, WIDTH_TILE, HEIGHT_TILE };
+	flowerSprite.sprite.setTexture(m_textureOfFlowerAngry);
+	flowerSprite.sprite.setTextureRect(flowerSprite.texture);
+	flowerSprite.sprite.setPosition({ float(15 * WIDTH_TILE), float(10 * HEIGHT_TILE) });
+	flowerSprite.flowerType = FlowerType::Angry;
+	flowersSprite.push_back(flowerSprite);
 }
 
 void Flower::Update()
@@ -126,7 +135,10 @@ void Flower::Update()
 		if (m_map->GetTypeOfTile(int(std::floor(flower.sprite.getPosition().y / 25) - 1), int(std::floor(flower.sprite.getPosition().x / 25))))
 		{
 			std::vector<FlowerSprite>::iterator iterForDelete = flowersSprite.begin() + index;
-			flowersSprite.erase(iterForDelete);
+			if (iterForDelete != flowersSprite.end())
+			{
+				flowersSprite.erase(iterForDelete);
+			}
 		}
 		index++;
 	}
@@ -150,8 +162,9 @@ bool Flower::IsPointInFlower(sf::Vector2f point, sf::Sprite flower)
 	return (isPointMoreX && isPointMoreY && isPointLessWidthFlower && isPointLessHeightFlower);
 }
 
-bool Flower::IsCoordInAngryFlower(sf::Vector2f coord, float xCoordErosionShader, bool& isAngryFlower)
+bool Flower::IsCoordInAngryFlower(sf::Vector2f coord, float xCoordErosionShader, bool& isAngryFlower, bool isKeyEPress)
 {
+	if (!isKeyEPress) return false;
 	int iterNecessary = -1;
 	bool isFlower = false;
 	for (int iter = 0; iter < flowersSprite.size(); iter++)
@@ -169,25 +182,24 @@ bool Flower::IsCoordInAngryFlower(sf::Vector2f coord, float xCoordErosionShader,
 			IsPointInFlower(centerRightPoint, flower.sprite) || IsPointInFlower(centerLeftPoint, flower.sprite))
 		{
 			isFlower = true;
-			if (xCoordErosionShader >= 0.8)
-			{
-				iterNecessary = iter;
-				break;
-			}
+			iterNecessary = iter;
+			break;
 		}
 	}
 
 	if (iterNecessary != -1)
 	{
 		isAngryFlower = true;
+		isKeyEPress = false;
 		flowersSprite.erase(std::next(flowersSprite.begin(), iterNecessary));
 	}
 
 	return isFlower;
 }
 
-bool Flower::IsCoordInFriendlyFlower(sf::Vector2f coord)
+bool Flower::IsCoordInFriendlyFlower(sf::Vector2f coord, bool isKeyEPress)
 {
+	if (!isKeyEPress) return false;
 	int iterNecessary = -1;
 	bool isFlower = false;
 	for (int iter = 0; iter < flowersSprite.size(); iter++)
@@ -212,6 +224,7 @@ bool Flower::IsCoordInFriendlyFlower(sf::Vector2f coord)
 
 	if (iterNecessary != -1)
 	{
+		isKeyEPress = false;
 		flowersSprite.erase(std::next(flowersSprite.begin(), iterNecessary));
 	}
 

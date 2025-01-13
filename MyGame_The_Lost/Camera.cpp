@@ -46,6 +46,12 @@ void Camera::SetPlayerCoordsAfterMove(sf::Vector2f coord)
 void Camera::PlayerHandler()
 {
 	PlayerMovement playerMovement;
+
+	playerMovement.isBottom = false;
+	playerMovement.isLeft = false;
+	playerMovement.isRight = false;
+	playerMovement.isTop = false;
+
 	bool isPlayerDig = false;
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
 	{
@@ -100,8 +106,12 @@ void Camera::EventHandler(sf::Event& event, sf::Vector2f& mouseCoords, bool& isM
 		case sf::Event::KeyPressed:
 			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
 			{
-				disasters->MakeRandomDisaster(m_player->GetPosition(), m_player->GetDirectionOfMovement());
-				//light->ChangeWorkingLight();
+				//disasters->MakeRandomDisaster(m_player->GetPosition(), m_player->GetDirectionOfMovement(), m_player->GetElapsedTimeAfterStartLevel());
+			}
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::E))
+			{
+				bool isKeyEPress = true;
+				m_player->SetStateForKeyE(isKeyEPress);
 			}
 		default:
 			break;
@@ -145,7 +155,6 @@ void Camera::DrawRenderTexture(sf::RenderWindow& window, const sf::Shader& shado
 {
 	window.draw(sf::Sprite(castTexture.getTexture()), &corosionShader);
 	//window.draw(sf::Sprite(renderTextureForLight.getTexture()), &shadowShader);
-	//window.draw(sf::Sprite(renderTextureForLight.getTexture()));
 	window.draw(sf::Sprite(renderTextureForPlayerState.getTexture()));
 }
 

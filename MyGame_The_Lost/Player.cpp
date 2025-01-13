@@ -11,7 +11,11 @@ Player::Player(Map* map, EndGame* end, sf::Vector2f viewPosition, sf::RenderText
 	player.setTexture(textureMovingRight);
 	player.setTextureRect({ 0, 0, PLAYER_WIDTH, PLAYER_HEIGHT });
 
-	MakeInitialState();
+	timeInLevel.push_back(0);
+	timeInLevel.push_back(0);
+	timeInLevel.push_back(0);
+
+	MakeInitialState(m_map->GetCurrentLevel());
 
 	framesForMovementLeft.resize(COUNT_SPRITE_MOVING);
 
@@ -36,14 +40,21 @@ Player::Player(Map* map, EndGame* end, sf::Vector2f viewPosition, sf::RenderText
 
 	timerForSpeed.restart();
 
+	timerForGame.restart();
+
 	fontForTimer.loadFromFile("../assets/Chava-Regular.otf");
 
 	eatingAngryFlower.openFromFile("../assets/flowerSound/eating_flower_angry.wav");
 	eatingFriendlyFlower.openFromFile("../assets/flowerSound/eating_flower_friendly.wav");
+	damagePlayer.openFromFile("../assets/soundOfPlayer/soundOfDamagePlayer.wav");
 }
 
-void Player::MakeInitialState()
+void Player::MakeInitialState(int level)
 {
+	if (level - 2 >= 0)
+	{
+		timeInLevel[level - 2] = timerForLevel.getElapsedTime().asSeconds();
+	}
 	timerForLevel.restart();
 	player.setPosition({ m_map->GetPlayerCoord().x * HEIGHT_TILE, m_map->GetPlayerCoord().y * WIDTH_TILE});
 	timerForPauseBetweenLevel.restart();
@@ -184,6 +195,7 @@ sf::Vector2f Player::GetPosition()
 
 void Player::UpdateMovement(PlayerMovement& movement)
 {
+	if (!this) return;
 	m_movement.isTop = movement.isTop;
 	m_movement.isRight = movement.isRight;
 	m_movement.isLeft = movement.isLeft;
@@ -191,11 +203,13 @@ void Player::UpdateMovement(PlayerMovement& movement)
 
 void Player::UpdateMouseCoord(sf::Vector2f mouseCoord)
 {
+	if (!this) return;
 	m_digging.mouseCoord = mouseCoord;
 }
 
 void Player::UpdateDigging(bool isPlayerDig)
 {
+	if (!this) return;
 	m_digging.isDig = isPlayerDig;
 }
 
@@ -568,6 +582,12 @@ void Player::PlayerMoveToTopSide(StatePlayerInWater statePlayerForWater)
 	sf::Vector2f positionPlayer = player.getPosition();
 	sf::Vector2f endPoint = { positionPlayer.x, endCoordForJump.y };
 
+	if (statePlayerForWater.playerInWaterBottomLeft || statePlayerForWater.playerInWaterBottomRight ||
+		statePlayerForWater.playerInWaterTopLeft || statePlayerForWater.playerInWaterTopRight)
+	{
+		endPoint.y = -1;
+	}
+
 	sf::Vector2f motion = { endPoint.x - positionPlayer.x, (endPoint.y - positionPlayer.y) };
 	float moduleMotion = GetModuleVector(motion);
 	sf::Vector2f direction = { motion.x / moduleMotion, motion.y / moduleMotion };
@@ -621,66 +641,79 @@ void Player::PlayerDig(sf::Vector2f viewPosition)
 		m_map->RunTimerForDeleteStone();
 	}
 
-	m_map->DeleteStone(numberOfTile, coordOfTile);
+	m_map->DeleteStone(numberOfTile, coordOfTile, excavatedCoal);
 }
 
-void Player::Update(sf::RenderTexture& castTexture, sf::RenderTexture& renderTextureForPlayerState,
-	const sf::View& view, float deltaTimeForMovement, sf::RenderWindow& window, Flower* flower)
+void Player::Update(PropsForUpdate& props, sf::RenderTexture& castTexture, sf::RenderTexture& renderTextureForPlayerState,
+	const sf::View& view, sf::RenderWindow& window, Flower* flower)
 {
 	statePlayerInWater.playerInWaterBottomRight = m_map->CoordInWater({ player.getPosition().x + player.getLocalBounds().width,
 		player.getPosition().y + player.getLocalBounds().height });
-	statePlayerInWater.playerInWaterBottomLeft = m_map->CoordInWater({ player.getPosition().x, player.getPosition().y + player.getLocalBounds().height });
+	statePlayerInWater.playerInWaterBottomLeft = m_map->CoordInWater({ player.getPosition().x,
+		player.getPosition().y + player.getLocalBounds().height });
 
 	statePlayerInWater.playerInWaterTopLeft = m_map->CoordInWater(player.getPosition());
-	statePlayerInWater.playerInWaterTopRight = m_map->CoordInWater({ player.getPosition().x + player.getLocalBounds().width, player.getPosition().y });
+	statePlayerInWater.playerInWaterTopRight = m_map->CoordInWater({ player.getPosition().x + player.getLocalBounds().width,
+		player.getPosition().y });
+
+	if (hp == 0)
+	{
+		stateOfGame = TypeOfEnd::PlayerDied;
+	}
+	if (stateOfGame == TypeOfEnd::PlayerDied)
+	{
+		m_end->ChangeStaticOfPlayer(excavatedCoal, timeInLevel, countOfFoundFlower);
+		m_end->ChangeStateDialogue();
+	}
 
 	if (!isJump)
 	{
-		endCoordForJump = { player.getPosition().x, player.getPosition().y - 48 };
+		endCoordForJump = { player.getPosition().x, player.getPosition().y - 50 };
 	}
-	if (!m_movement.isTop && !isBadState)
+	if (!m_movement.isTop && !isBadState && !props.isGhostMove)
 	{
 		m_movement.isTop = false;
 		PlayerMoveToBottomSide(statePlayerInWater);
 	}
-	if (m_movement.isRight && !isBadState)
+	if (m_movement.isRight && !isBadState && !props.isGhostMove)
 	{
-		PlayerMoveToRightSide(deltaTimeForMovement, statePlayerInWater);
+		PlayerMoveToRightSide(props.deltaTimeForMovement, statePlayerInWater);
 		speedLeft = MIN_SPEED;
 	}
 	else
 	{
-		if (!isBadState)
+		if (!isBadState && !props.isGhostMove)
 		{
-			PlayerMoveToRightSideOnIce(deltaTimeForMovement, statePlayerInWater);
+			PlayerMoveToRightSideOnIce(props.deltaTimeForMovement, statePlayerInWater);
 		}
 	}
-	if (m_movement.isLeft && !isBadState)
+	if (m_movement.isLeft && !isBadState && !props.isGhostMove)
 	{
-		PlayerMoveToLeftSide(deltaTimeForMovement, statePlayerInWater);
+		PlayerMoveToLeftSide(props.deltaTimeForMovement, statePlayerInWater);
 		speedRight = MIN_SPEED;
 	}
 	else
 	{
-		if (!isBadState)
+		if (!isBadState && !props.isGhostMove)
 		{
-			PlayerMoveToLeftSideOnIce(deltaTimeForMovement, statePlayerInWater);
+			PlayerMoveToLeftSideOnIce(props.deltaTimeForMovement, statePlayerInWater);
 		}
 	}
-	if (m_movement.isTop && !m_movement.isBottom && !isBadState)
+	if (m_movement.isTop && !m_movement.isBottom && !isBadState && !props.isGhostMove)
 	{
 		isJump = true;
 		PlayerMoveToTopSide(statePlayerInWater);
 	}
-	if (m_digging.isDig && !isBadState)
+	if (m_digging.isDig && !isBadState && !props.isGhostMove)
 	{
 		PlayerDig(view.getCenter() - view.getSize() / 2.0f);
 	}
 	if (m_map->DidPlayerFindTeam(player.getPosition(), view, castTexture))
 	{
 		int level = m_map->GetCurrentLevel();
-		if (level == 4)
+		if (level == 4 || stateOfGame == TypeOfEnd::PlayerDied)
 		{
+			m_end->ChangeStaticOfPlayer(excavatedCoal, timeInLevel, countOfFoundFlower);
 			m_end->ChangeStateDialogue();
 		}
 		else
@@ -702,13 +735,14 @@ void Player::Update(sf::RenderTexture& castTexture, sf::RenderTexture& renderTex
 			window.draw(nextLevel);
 			window.display();
 
-			MakeInitialState();
+			MakeInitialState(level);
 
 			m_map->MakeMap(view, castTexture);
 			isNextLevel = true;
 		}
 	}
-	if (flower->IsCoordInAngryFlower(player.getPosition(), firstCoordForCorrosion.x, isAngryFlower))
+
+	if (flower->IsCoordInAngryFlower(player.getPosition(), firstCoordForCorrosion.x, isAngryFlower, isKeyEPress))
 	{
 		if (isAngryFlower)
 		{
@@ -717,20 +751,28 @@ void Player::Update(sf::RenderTexture& castTexture, sf::RenderTexture& renderTex
 			ChangeHpLevel(-20);
 			ChangeWaterLevel(-15);
 			isAngryFlower = false;
+			countOfFoundFlower++;
 		}
 		isBadState = true;
 	}
-	if (flower->IsCoordInFriendlyFlower(player.getPosition()))
+	if (flower->IsCoordInFriendlyFlower(player.getPosition(), isKeyEPress))
 	{
 		eatingFriendlyFlower.play();
 		ChangeFearLevel(-fearLevel);
 		ChangeHpLevel(MAX_HP * 0.25);
 		ChangeWaterLevel(20);
+		countOfFoundFlower++;
 	}
+	if (timerForGame.getElapsedTime().asSeconds() > MAX_TIME_SECONDS_FOR_LEVEL * 3)
+	{
+		stateOfGame = TypeOfEnd::BadEnd;
+	}
+	isKeyEPress = false;
 
 	ChangeFirstCoordForCorosion();
 	UpdateRectsOfStates(view.getCenter() - view.getSize() / 2.0f, renderTextureForPlayerState);
 	PrintTimeLevel(renderTextureForPlayerState, view.getCenter() - view.getSize() / 2.0f);
+	PrintExcavatedCoal(renderTextureForPlayerState, view.getCenter() - view.getSize() / 2.0f);
 	castTexture.draw(player);
 }
 
@@ -861,7 +903,12 @@ void Player::UpdateRectsOfStates(sf::Vector2f viewPosition, sf::RenderTexture& c
 	castTexture.draw(wrapperRectForWater);
 	castTexture.draw(wrapperRectForFear);
 
-	if (timerForUpdateStatePlayer.getElapsedTime().asSeconds() <= 0.8f) return;
+	if (timerForUpdateStatePlayer.getElapsedTime().asSeconds() <= 1.0f) return;
+
+	if (hp < MIN_HP)
+	{
+		hp = MIN_HP;
+	}
 
 	if (statePlayerInWater.playerInWaterTopLeft || statePlayerInWater.playerInWaterTopRight)
 	{
@@ -887,11 +934,15 @@ void Player::UpdateRectsOfStates(sf::Vector2f viewPosition, sf::RenderTexture& c
 	}
 
 	if (statePlayerInWater.playerInWaterTopLeft || statePlayerInWater.playerInWaterTopRight ||
-		statePlayerInWater.playerInWaterBottomLeft || statePlayerInWater.playerInWaterBottomRight)
+		statePlayerInWater.playerInWaterBottomLeft || statePlayerInWater.playerInWaterBottomRight && excavatedCoal != 0)
 	{
 		if (waterLevel < MAX_WATER_LEVEL)
 		{
-			waterLevel += 3.0f;
+			if (excavatedCoal > 0)
+			{
+				waterLevel += 3.0f;
+				excavatedCoal--;
+			}
 		}
 		if (waterLevel > MAX_WATER_LEVEL)
 		{
@@ -914,7 +965,9 @@ void Player::UpdateRectsOfStates(sf::Vector2f viewPosition, sf::RenderTexture& c
 	{
 		if (hp > MIN_HP)
 		{
+			damagePlayer.play();
 			hp -= 2.5f;
+
 		}
 		if (hp < MIN_HP)
 		{
@@ -926,6 +979,7 @@ void Player::UpdateRectsOfStates(sf::Vector2f viewPosition, sf::RenderTexture& c
 	{
 		if (hp > MIN_HP)
 		{
+			damagePlayer.play();
 			hp -= 0.3f;
 		}
 		if (hp < MIN_HP)
@@ -934,13 +988,27 @@ void Player::UpdateRectsOfStates(sf::Vector2f viewPosition, sf::RenderTexture& c
 		}
 	}
 
-	if (fearLevel > MIN_FEAR_LEVEL)
+	if (timerForLevel.getElapsedTime().asSeconds() >= MAX_TIME_SECONDS_FOR_LEVEL)
 	{
-		fearLevel -= 0.4f;
+		if (fearLevel < MAX_FEAR_LEVEL)
+		{
+			fearLevel += 0.1f;
+		}
+		if (fearLevel >= MAX_FEAR_LEVEL)
+		{
+			fearLevel = MAX_FEAR_LEVEL;
+		}
 	}
-	if (fearLevel < MIN_FEAR_LEVEL)
+	else
 	{
-		fearLevel = MIN_FEAR_LEVEL;
+		if (fearLevel > MIN_FEAR_LEVEL)
+		{
+			fearLevel -= 0.4f;
+		}
+		if (fearLevel < MIN_FEAR_LEVEL)
+		{
+			fearLevel = MIN_FEAR_LEVEL;
+		}
 	}
 
 	rectForHp.setSize({ hp * KOEF_WIDTH_RECT_STATE_PLAYER, HEIGHT_RECT_STATE_PLAYER });
@@ -972,10 +1040,15 @@ void Player::ChangeFearLevel(float delta)
 	{
 		fearLevel = MAX_FEAR_LEVEL;
 	}
+	m_map->ChangeSpeedBreakingStone(fearLevel, MAX_FEAR_LEVEL, MIN_FEAR_LEVEL);
 }
 
 void Player::ChangeHpLevel(float delta)
 {
+	if (delta < 0)
+	{
+		damagePlayer.play();
+	}
 	hp += delta;
 	if (hp < MIN_HP)
 	{
@@ -989,6 +1062,13 @@ void Player::ChangeHpLevel(float delta)
 
 void Player::ChangeWaterLevel(float delta)
 {
+	if (delta > 0)
+	{
+		if (excavatedCoal <= 0)
+		{
+			return;
+		}
+	}
 	waterLevel += delta;
 	if (waterLevel < MIN_WATER_LEVEL)
 	{
@@ -1045,7 +1125,7 @@ void Player::PrintTimeLevel(sf::RenderTexture& texturePlayerState, sf::Vector2f 
 		std::to_string(int(timerForLevel.getElapsedTime().asSeconds()) % 60);
 
 	sf::Text timeForLevel;
-	timeForLevel.setFont(fontForTimer);
+	timeForLevel.setFont(fontForTimer); 
 	timeForLevel.setString(text);
 	timeForLevel.setCharacterSize(100);
 	timeForLevel.setFillColor(sf::Color(255, 255, 255));
@@ -1054,4 +1134,35 @@ void Player::PrintTimeLevel(sf::RenderTexture& texturePlayerState, sf::Vector2f 
 
 	texturePlayerState.draw(timeForLevel);
 	texturePlayerState.display();
+}
+
+void Player::PrintExcavatedCoal(sf::RenderTexture& texturePlayerState, sf::Vector2f viewPosition)
+{
+	std::string text = std::to_string(excavatedCoal);
+
+	sf::Text timeForLevel;
+	timeForLevel.setFont(fontForTimer);
+	timeForLevel.setString(text);
+	timeForLevel.setCharacterSize(100);
+	timeForLevel.setFillColor(sf::Color(255, 255, 255));
+	timeForLevel.setStyle(sf::Text::Style::Bold);
+	timeForLevel.setPosition({ viewPosition.x + 20 + 100 * KOEF_WIDTH_RECT_STATE_PLAYER + 60, viewPosition.y + 20 + 100 });
+
+	texturePlayerState.draw(timeForLevel);
+	texturePlayerState.display();
+}
+
+float Player::GetFearLevel()
+{
+	return fearLevel;
+}
+
+TypeOfEnd Player::GetStateEnd()
+{
+	return stateOfGame;
+}
+
+void Player::SetStateForKeyE(bool& state)
+{
+	isKeyEPress = state;
 }

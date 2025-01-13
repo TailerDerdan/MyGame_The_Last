@@ -12,6 +12,10 @@ enum TypeTile
 	Coal,
 	WaterInCoal,
 	Ice,
+	StoneBroken1,
+	WaterInStoneBroken1,
+	StoneBroken2,
+	WaterInStoneBroken2,
 };
 
 struct Tile 

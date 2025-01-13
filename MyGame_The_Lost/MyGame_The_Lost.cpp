@@ -20,6 +20,9 @@ struct Light
 {
     ShadowLight* light = new ShadowLight();
     sf::VertexArray blocks;
+    float fearLevel = 0.0f;
+    float maxFearLevel = MAX_FEAR_LEVEL;
+    float minFearLevel = MIN_FEAR_LEVEL;
 };
 
 void MakeLight(Light& light, Map* map, sf::Vector2f playerCoord, bool& isFirstTimeOfSpreadLight)
@@ -28,7 +31,7 @@ void MakeLight(Light& light, Map* map, sf::Vector2f playerCoord, bool& isFirstTi
     
     sf::Vector2f tilePlayerCoord = { floor(playerCoord.x / 25), floor(playerCoord.y / 25) };
 
-    map->SpreadTheLight(tilePlayerCoord, isFirstTimeOfSpreadLight);
+    map->SpreadTheLight(tilePlayerCoord, isFirstTimeOfSpreadLight, light.fearLevel, light.maxFearLevel, light.minFearLevel);
     isFirstTimeOfSpreadLight = false;
 
     light.blocks = light.light->CreateAllVertexFromGreed(map->GetMapOfLightInBool());
@@ -70,8 +73,6 @@ int main()
     
     sf::Clock clock;
     sf::Clock clockForFallingStone;
-    
-    camera->SetPlayer(player);
 
     bool isFirstTimeOfSpreadLight = true;
     bool isCorrosion = false;
@@ -83,6 +84,11 @@ int main()
     {
         if (player->GetElapsedTimeAfterStartLevel() <= 3.0f)
         {
+            if (player->GetElapsedTimeAfterStartLevel() == 2.0f)
+            {
+                camera->SetPlayer(player);
+                flower->MakeRandomGeneration(COUNT_FRIENDLY_FLOWER, COUNT_ANGRY_FLOWER);
+            }
             player->SetIsNextLevel(false);
             continue;
         }
@@ -94,11 +100,11 @@ int main()
 
         if (end->GetStateDialogue())
         {
-            end->DrawDialouge(camera->m_window);
+            end->DrawDialouge(camera->m_window, player->GetStateEnd());
             continue;
         }
 
-        //disasters->MakeRandomDisaster(player->GetPosition(), player->GetDirectionOfMovement());
+        //disasters->MakeRandomDisaster(player->GetPosition(), player->GetDirectionOfMovement(), player->GetElapsedTimeAfterStartLevel());
         float deltaTimeForMovement = clock.restart().asSeconds();
         
         camera->Update(mouseCoords, isMouseMove, disasters);
@@ -109,7 +115,12 @@ int main()
         flower->Update();
         flower->DrawFlowers(camera->castTexture);
 
-        player->Update(camera->castTexture, camera->renderTextureForPlayerState, camera->GetView(), deltaTimeForMovement, camera->m_window, flower);
+        PropsForUpdate props;
+
+        props.deltaTimeForMovement = deltaTimeForMovement;
+        props.isGhostMove = disasters->GetStateGhost();
+
+        player->Update(props, camera->castTexture, camera->renderTextureForPlayerState, camera->GetView(), camera->m_window, flower);
 
         if (player->GetIsNextLevel())
         {
@@ -117,6 +128,8 @@ int main()
         }
         camera->SetPlayerCoordsAfterMove(player->GetPosition());
         camera->UpdatePostionCamera();
+
+        light.fearLevel = player->GetFearLevel();
 
         MakeLight(light, map, player->GetPosition(), isFirstTimeOfSpreadLight);
         camera->renderTextureForLight.draw(light.blocks);
@@ -134,8 +147,10 @@ int main()
         corosionShader.setUniform("secondPoint", sf::Vector2f{ 0.5f, 0.5f });
         corosionShader.setUniform("firstPoint", player->GetFirstCoordForCorosion());
         corosionShader.setUniform("erosion_max_offset", 1.0f);
+        corosionShader.setUniform("level", map->GetCurrentLevel());
 
         shadowShader.setUniform("mousePosition", player->GetPosition() - camera->GetViewPosition());
+        shadowShader.setUniform("isGhostMove", disasters->GetStateGhost());
 
         //std::cout << camera->GetViewPosition().x << " " << camera->GetViewPosition().y << " main loop" << std::endl;
 

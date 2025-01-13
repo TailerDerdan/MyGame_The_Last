@@ -28,8 +28,8 @@ public:
 
 	void Update();
 
-	bool IsCoordInFriendlyFlower(sf::Vector2f coord);
-	bool IsCoordInAngryFlower(sf::Vector2f coord, float xCoordErosionShader, bool& isAngryFlower);
+	bool IsCoordInFriendlyFlower(sf::Vector2f coord, bool isKeyEPress);
+	bool IsCoordInAngryFlower(sf::Vector2f coord, float xCoordErosionShader, bool& isAngryFlower, bool isKeyEPress);
 
 private:
 	int Random(int min, int max);

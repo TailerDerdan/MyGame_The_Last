@@ -2,9 +2,6 @@
 #include "includes.h"
 #include "Tile.h"
 
-const int WIDTH_MAP = 154;
-const int HEIGHT_MAP = 200;
-
 const int RADIUS_WATER = 8;
 
 const int RADIUS_COAL = 5;
@@ -16,6 +13,10 @@ const int RADIUS_SPREAD_LIGHT_LEVEL_2 = 5;
 const int RADIUS_SPREAD_LIGHT_LEVEL_3 = 3;
 
 const float TIME_FOR_LEVEL = 7.0f * 60.0f;
+
+const float FAST_SPEED_BREAKING_STONE = 0.25;
+const float SLOW_SPEED_BREAKING_STONE = 0.35;
+const float SUPER_SLOW_SPEED_BREAKING_STONE = 0.45;
 
 enum TypeOfMovementWater
 {
@@ -52,13 +53,13 @@ public:
 	void UpdateMap(const sf::View& view, sf::RenderTexture& castTexture);
 	void MakeMap(const sf::View& view, sf::RenderTexture& castTexture);
 
-	void SpreadTheLight(sf::Vector2f& coord, bool isFirstTimeOfSpreadLight);
+	void SpreadTheLight(sf::Vector2f& coord, bool isFirstTimeOfSpreadLight, float fearLevel, float maxFearLevel, float minFearLevel);
 
 	TypeTile GetTypeOfTile(int numberOfTile);
 	TypeTile GetTypeOfTile(int xCoord, int yCoord);
 	void ChangeColorOfTile(int numberOfTile);
 
-	void DeleteStone(int numberOfTile, sf::Vector2f coordOfTile);
+	void DeleteStone(int numberOfTile, sf::Vector2f coordOfTile, int& excavatedCoal);
 
 	bool DidPlayerFindTeam(sf::Vector2f coordPlayer, const sf::View& view, sf::RenderTexture& castTexture);
 
@@ -81,6 +82,9 @@ public:
 
 	void RunTimerForDeleteStone();
 	bool GetStateTimerForDeleteStone();
+
+	void ChangeSpeedBreakingStone(float fearLevel, float maxFearLevel, float minFearLevel);
+	void SpreadIceAroundRect(sf::Vector2i topLeftPointRect, int widthRect, int heightRect);
 
 private:
 	void FillLightFromCell(sf::Vector2f& coord, int& radius);
@@ -112,12 +116,16 @@ private:
 	void GetNextIterationForIce();
 	void GenerateIce(int countOfIteration);
 
+	bool isBlockWater(sf::Vector2i coord);
+
 	void SetParamsForStone(ParamsForTile params);
 	void SetParamsForWall(ParamsForTile params);
 	void SetParamsForWaterStone(ParamsForTile params);
 	void SetParamsForCoal(ParamsForTile params);
 	void SetParamsForWaterCoal(ParamsForTile params);
 	void SetParamsForIce(ParamsForTile params);
+	void SetParamsForStoneBroaken1(ParamsForTile params);
+	void SetParamsForStoneBroaken2(ParamsForTile params);
 
 	int Random(int min, int max);
 
@@ -155,4 +163,6 @@ private:
 
 	sf::Clock timerForDeleteStone;
 	bool isTimerForDeleteStoneRun = false;
+
+	float timeForBreakingPartOfStone = FAST_SPEED_BREAKING_STONE;
 };

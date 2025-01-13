@@ -16,3 +16,15 @@ const int WINDOW_HEIGHT = 1080;
 
 const int PLAYER_WIDTH = 20;
 const int PLAYER_HEIGHT = 35;
+
+const int WIDTH_MAP = 154;
+const int HEIGHT_MAP = 200;
+
+const float MAX_TIME_SECONDS_FOR_LEVEL = 420.0f;
+
+enum TypeOfEnd
+{
+	HappyEnd,
+	BadEnd,
+	PlayerDied,
+};

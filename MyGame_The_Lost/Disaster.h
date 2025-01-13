@@ -11,6 +11,9 @@ const float MIN_SPEED_GHOST = 10.0f;
 
 const float DAMAGE_FOR_PLAYER = 10.0f;
 
+const int WIDTH_GHOST = 250;
+const int HEIGHT_GHOST = 250;
+
 enum TypeOfDisaster
 {
 	None,
@@ -39,11 +42,13 @@ class Disaster
 public:
 	Disaster(Map* map, Player* player, ShadowLight* light, sf::Texture& ghostTexture);
 
-	void MakeRandomDisaster(sf::Vector2f playerCoord, bool isPlayerMovementToRight);
+	void MakeRandomDisaster(sf::Vector2f playerCoord, bool isPlayerMovementToRight, float levelTime);
 	void FallingStone(float dTime, sf::RenderWindow& window, sf::Vector2f playerCoord);
 	void Shake(float dTime, sf::RenderWindow& window, sf::View view);
 	void DoTurningOnTheLight();
 	void MoveGhost(sf::RenderTexture& castTexture);
+
+	bool GetStateGhost();
 
 private:
 	void MakeTableOfWeight();
@@ -66,6 +71,9 @@ private:
 	void CheckCoordInField(sf::Vector2i& coord);
 
 	float GetModuleVector(const sf::Vector2f& vect);
+	void CheckBounds(sf::Vector2i& coord, int& widthRect, int& heightRect);
+
+	int Random(int min, int max);
 
 private:
 	Map* m_map;
@@ -108,4 +116,7 @@ private:
 	bool isGhostMove = false;
 
 	bool isShake = false;
+
+	bool isTimeForGhostMove = false;
+	bool isGhostMoveFirst = true;
 };

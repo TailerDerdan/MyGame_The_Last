@@ -39,7 +39,8 @@ const float KOEF_WIDTH_RECT_STATE_PLAYER = 5.f;
 const float THICKNESS_FOR_RECT = 5.f;
 const float Y_INDENT_FOR_RECT = 20.f;
 
-enum SideForChechiking {
+enum SideForChechiking 
+{
 	Top,
 	Right,
 	Bottom,
@@ -69,21 +70,27 @@ struct StatePlayerInWater
 	bool playerInWaterTopRight = false;
 };
 
+struct PropsForUpdate
+{
+	float deltaTimeForMovement;
+	bool isGhostMove;
+};
+
 class Player
 {
 public:
 
 	Player(Map* map, EndGame* end, sf::Vector2f viewPosition, sf::RenderTexture& castTexture);
 
-	void Update(sf::RenderTexture& castTexture, sf::RenderTexture& renderTextureForPlayerState, const sf::View& view, 
-		float deltaTimeForMovement, sf::RenderWindow& window, Flower* flower);
+	void Update(PropsForUpdate& props, sf::RenderTexture& castTexture, sf::RenderTexture& renderTextureForPlayerState, 
+		const sf::View& view, sf::RenderWindow& window, Flower* flower);
 
 	void UpdateMovement(PlayerMovement& movement);
 	void UpdateMouseCoord(sf::Vector2f mouseCoord);
 	void UpdateDigging(bool isPlayerDig);
 	void DisplayMovement();
 
-	void MakeInitialState();
+	void MakeInitialState(int level);
 
 	float GetElapsedTimeAfterStartLevel();
 
@@ -98,11 +105,16 @@ public:
 	void ChangeFearLevel(float delta);
 	void ChangeHpLevel(float delta);
 	void ChangeWaterLevel(float delta);
+
+	float GetFearLevel();
+
+	TypeOfEnd GetStateEnd();
 	
 	sf::Vector2f GetFirstCoordForCorosion();
 	void ChangeFirstCoordForCorosion();
 
 	void SetBadState(bool state);
+	void SetStateForKeyE(bool& state);
 
 	~Player();
 
@@ -135,6 +147,7 @@ private:
 	void MakeRectsOfStates(sf::Vector2f viewPosition);
 
 	void PrintTimeLevel(sf::RenderTexture& texturePlayerState, sf::Vector2f viewPosition);
+	void PrintExcavatedCoal(sf::RenderTexture& texturePlayerState, sf::Vector2f viewPosition);
 
 private:
 	PlayerMovement m_movement;
@@ -179,6 +192,7 @@ private:
 	float fearLevel = MIN_FEAR_LEVEL;
 	float speedRight = MIN_SPEED;
 	float speedLeft = MIN_SPEED;
+	int excavatedCoal = 0;
 
 	bool isAngryFlower = false;
 
@@ -207,6 +221,15 @@ private:
 	sf::Clock timerForLevel;
 	sf::Font fontForTimer;
 
+	std::vector<float> timeInLevel;
+	int countOfFoundFlower = 0;
+
+	sf::Clock timerForGame;
+	TypeOfEnd stateOfGame;
+
 	sf::Music eatingAngryFlower;
 	sf::Music eatingFriendlyFlower;
+	sf::Music damagePlayer;
+
+	bool isKeyEPress = false;
 };

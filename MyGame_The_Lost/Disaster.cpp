@@ -16,7 +16,7 @@ Disaster::Disaster(Map* map, Player* player, ShadowLight* light, sf::Texture& ne
 	soundOfTurningOff.openFromFile("../assets/disastersSound/turningOff.wav");
 
 	ghostTexture = newGhostTexture;
-	ghostIntRect = { 0, 0, 250, 250 };
+	ghostIntRect = { 0, 0, WIDTH_GHOST, HEIGHT_GHOST };
 	ghost.setTexture(ghostTexture);
 	ghost.setTextureRect(ghostIntRect);
 	ghost.setColor(sf::Color(255, 255, 255, 0));
@@ -24,41 +24,66 @@ Disaster::Disaster(Map* map, Player* player, ShadowLight* light, sf::Texture& ne
 	timerForDisaster.restart();
 }
 
-void Disaster::MakeRandomDisaster(sf::Vector2f playerCoord, bool isPlayerMovementToRight)
+int Disaster::Random(int min, int max)
 {
-	//if (timerForDisaster.getElapsedTime().asSeconds() < 5)
-	//{
-	//	if (isFirstDisaster)
-	//	{
-	//		return;
-	//	}
-	//}
+	std::random_device dev;
+	std::mt19937 rng(dev());
+	std::uniform_int_distribution<std::mt19937::result_type> dist(min, max);
 
-	//if (timerForDisaster.getElapsedTime().asSeconds() < 12)
-	//{
-	//	if (isNextDisaster || !isFirstDisaster)
-	//	{
-	//		return;
-	//	}
-	//}
+	return dist(rng);
 
-	//int R = Random(0, sum);
-	//int T = 0;
+	/*int randomInt = rand() % 100;
 
-	//for (auto& disaster : tableOFWeightOfDisaster)
-	//{
-	//	T += disaster.second;
-	//	if (T > R)
-	//	{
-	//		WriteDisaster(disaster.first, playerCoord, isPlayerMovementToRight);
-	//		break;
-	//	}
-	//}
-	DoRockfall(playerCoord, isPlayerMovementToRight);
-	//DoGhost(playerCoord);
-	//DoSiren();
-	//DoTurningOffTheLight();
-	//WriteDisaster(TypeOfDisaster::TurningOfTheLight, playerCoord, isPlayerMovementToRight);
+	return randomInt;*/
+}
+
+void Disaster::MakeRandomDisaster(sf::Vector2f playerCoord, bool isPlayerMovementToRight, float levelTime)
+{
+	if (timerForDisaster.getElapsedTime().asSeconds() < 5)
+	{
+		if (isFirstDisaster)
+		{
+			return;
+		}
+	}
+
+	if (timerForDisaster.getElapsedTime().asSeconds() < 12)
+	{
+		if (isNextDisaster || !isFirstDisaster)
+		{
+			return;
+		}
+	}
+
+	if (levelTime >= MAX_TIME_SECONDS_FOR_LEVEL)
+	{
+		isTimeForGhostMove = true;
+	}
+
+	if (m_map->GetCurrentLevel() == 3)
+	{
+		isTimeForGhostMove = true;
+		isGhostMoveFirst = false;
+	}
+
+	if (isTimeForGhostMove && isGhostMoveFirst)
+	{
+		DoGhost(playerCoord);
+		isGhostMoveFirst = false;
+	}
+
+	int randNum = Random(0, sumOfAllWeight);
+	int currentWeight = 0;
+
+	for (auto& disaster : tableOFWeightOfDisaster)
+	{
+		currentWeight += disaster.second;
+		if (currentWeight > randNum)
+		{
+			WriteDisaster(disaster.first, playerCoord, isPlayerMovementToRight);
+			break;
+		}
+	}
 }
 
 void Disaster::WriteDisaster(TypeOfDisaster disaster, sf::Vector2f playerCoord, bool isPlayerMovementToRight)
@@ -88,6 +113,15 @@ void Disaster::WriteDisaster(TypeOfDisaster disaster, sf::Vector2f playerCoord, 
 		isNextDisaster = true;
 		m_player->ChangeFearLevel(15.f);
 		break;
+	case Ghost:
+		if (!isTimeForGhostMove) break;
+
+		DoGhost(playerCoord);
+		timerForDisaster.restart();
+		isFirstDisaster = false;
+		isNextDisaster = true;
+		m_player->ChangeFearLevel(20.f);
+		break;
 	default:
 		break;
 	}
@@ -98,7 +132,7 @@ void Disaster::MakeTableOfWeight()
 	tableOFWeightOfDisaster.insert(std::pair(TypeOfDisaster::None, 25000));
 	sumOfAllWeight += tableOFWeightOfDisaster.find(TypeOfDisaster::None)->second;
 
-	tableOFWeightOfDisaster.insert(std::pair(TypeOfDisaster::TurningOfTheLight, 2));
+	tableOFWeightOfDisaster.insert(std::pair(TypeOfDisaster::TurningOfTheLight, 3));
 	sumOfAllWeight += tableOFWeightOfDisaster.find(TypeOfDisaster::TurningOfTheLight)->second;
 
 	tableOFWeightOfDisaster.insert(std::pair(TypeOfDisaster::Siren, 1));
@@ -106,6 +140,9 @@ void Disaster::MakeTableOfWeight()
 
 	tableOFWeightOfDisaster.insert(std::pair(TypeOfDisaster::Rockfall, 1));
 	sumOfAllWeight += tableOFWeightOfDisaster.find(TypeOfDisaster::Rockfall)->second;
+
+	tableOFWeightOfDisaster.insert(std::pair(TypeOfDisaster::Ghost, 2));
+	sumOfAllWeight += tableOFWeightOfDisaster.find(TypeOfDisaster::Ghost)->second;
 }
 
 void Disaster::CheckCoordInField(sf::Vector2i& coord)
@@ -176,7 +213,9 @@ void Disaster::CheckStoneAroundFallingStone(sf::Vector2i coordOfStone)
 	{
 		if (m_map->GetTypeOfTile(coordOfStone.x * HEIGHT_MAP + coordOfStone.y + 1) == TypeTile::Ice)
 		{
-			m_map->DeleteStone(coordOfStone.x * HEIGHT_MAP + coordOfStone.y + 1, { float(coordOfStone.x), float(coordOfStone.y + 1) });
+			int varForExcavatedCoal = 0;
+			m_map->DeleteStone(coordOfStone.x * HEIGHT_MAP + coordOfStone.y + 1, 
+				{ float(coordOfStone.x), float(coordOfStone.y + 1) }, varForExcavatedCoal);
 		}
 		else
 		{
@@ -191,7 +230,9 @@ void Disaster::CheckStoneAroundFallingStone(sf::Vector2i coordOfStone)
 	{
 		if (m_map->GetTypeOfTile(coordOfStone.x * HEIGHT_MAP + coordOfStone.y - 1) == TypeTile::Ice)
 		{
-			m_map->DeleteStone(coordOfStone.x * HEIGHT_MAP + coordOfStone.y - 1, { float(coordOfStone.x), float(coordOfStone.y - 1) });
+			int varForExcavatedCoal = 0;
+			m_map->DeleteStone(coordOfStone.x * HEIGHT_MAP + coordOfStone.y - 1, 
+				{ float(coordOfStone.x), float(coordOfStone.y - 1) }, varForExcavatedCoal);
 		}
 		else
 		{
@@ -206,7 +247,9 @@ void Disaster::CheckStoneAroundFallingStone(sf::Vector2i coordOfStone)
 	{
 		if (m_map->GetTypeOfTile((coordOfStone.x + 1) * HEIGHT_MAP + coordOfStone.y) == TypeTile::Ice)
 		{
-			m_map->DeleteStone((coordOfStone.x + 1) * HEIGHT_MAP + coordOfStone.y, { float(coordOfStone.x + 1), float(coordOfStone.y) });
+			int varForExcavatedCoal = 0;
+			m_map->DeleteStone((coordOfStone.x + 1) * HEIGHT_MAP + coordOfStone.y, 
+				{ float(coordOfStone.x + 1), float(coordOfStone.y) }, varForExcavatedCoal);
 		}
 		else
 		{
@@ -493,12 +536,45 @@ void Disaster::DoGhost(sf::Vector2f playerCoord)
 	ghost.setPosition(playerCoord.x + 200, playerCoord.y - 150);
 }
 
+void Disaster::CheckBounds(sf::Vector2i& coord, int& widthRect, int& heightRect)
+{
+	if (coord.x < 0)
+	{
+		coord.x = 0;
+	}
+
+	if (coord.x > WIDTH_MAP)
+	{
+		coord.x = WIDTH_MAP;
+	}
+
+	if (coord.y < 0)
+	{
+		coord.y = 0;
+	}
+
+	if (coord.y > HEIGHT_MAP)
+	{
+		coord.y = HEIGHT_MAP;
+	}
+
+	if (coord.x + widthRect > HEIGHT_MAP)
+	{
+		widthRect = coord.x + widthRect - HEIGHT_MAP - 1;
+	}
+
+	if (coord.y + heightRect > WIDTH_MAP)
+	{
+		heightRect = coord.y + heightRect - WIDTH_MAP - 1;
+	}
+}
+
 void Disaster::MoveGhost(sf::RenderTexture& castTexture)
 {
 	if (!isGhostMove) return;
 
 	sf::Vector2f positionGhost = ghost.getPosition();
-	sf::Vector2f endPoint = { -100, positionGhost.y };
+	sf::Vector2f endPoint = { -250, positionGhost.y };
 
 	sf::Vector2f motion = { endPoint.x - positionGhost.x, endPoint.y - positionGhost.y };
 	float moduleMotion = GetModuleVector(motion);
@@ -525,6 +601,19 @@ void Disaster::MoveGhost(sf::RenderTexture& castTexture)
 		return;
 	}
 
+	sf::Vector2i coordGhost = { int(std::floor(ghost.getPosition().y / WIDTH_TILE)), int(std::floor(ghost.getPosition().x / HEIGHT_TILE)) };
+
+	int widthRect = int(std::floor(WIDTH_GHOST / WIDTH_TILE));
+	int heightRect = int(std::floor(HEIGHT_GHOST / HEIGHT_TILE));
+
+	CheckBounds(coordGhost, widthRect, heightRect);
+	m_map->SpreadIceAroundRect(coordGhost, widthRect, heightRect);
+
 	ghost.setPosition(positionGhost + newDirection);
 	castTexture.draw(ghost);
+}
+
+bool Disaster::GetStateGhost()
+{
+	return isGhostMove;
 }

@@ -7,6 +7,8 @@ uniform float erosion_max_offset;
 uniform vec2 firstPoint;
 uniform vec2 secondPoint;
 
+uniform int level;
+
 out vec4 FragColor;
 
 void main() {
@@ -18,4 +20,11 @@ void main() {
 	float erosion_threshold = distance(firstPoint, secondPoint) * erosion_max_offset * 2;
 	float alpha = erosion_tex.r > erosion_threshold ? 0.0 : 1.0;
 	FragColor = alpha > 0.0 ? screen_tex : vec4(0.0, 0.0, 0.0, 1.0);
+
+	if (level == 3)
+	{
+		float luminance = (screen_tex.r + screen_tex.g + screen_tex.b) / 3.0;
+		FragColor = vec4(luminance, luminance, luminance, 1.0);
+	}
+
 }
