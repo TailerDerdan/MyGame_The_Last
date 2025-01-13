@@ -29,7 +29,7 @@ void MakeLight(Light& light, Map* map, sf::Vector2f playerCoord, bool& isFirstTi
 {
     light.blocks.clear();
     
-    sf::Vector2f tilePlayerCoord = { floor(playerCoord.x / 25), floor(playerCoord.y / 25) };
+    sf::Vector2f tilePlayerCoord = { floor(playerCoord.x / HEIGHT_TILE), floor(playerCoord.y / WIDTH_TILE) };
 
     map->SpreadTheLight(tilePlayerCoord, isFirstTimeOfSpreadLight, light.fearLevel, light.maxFearLevel, light.minFearLevel);
     isFirstTimeOfSpreadLight = false;
@@ -92,11 +92,11 @@ int main()
             player->SetIsNextLevel(false);
             continue;
         }
-        /*if (!start.GetStateDialogue())
+        if (!start.GetStateDialogue())
         {
             start.DrawDialouge(camera->m_window);
             continue;
-        }*/
+        }
 
         if (end->GetStateDialogue())
         {
@@ -104,7 +104,7 @@ int main()
             continue;
         }
 
-        //disasters->MakeRandomDisaster(player->GetPosition(), player->GetDirectionOfMovement(), player->GetElapsedTimeAfterStartLevel());
+        disasters->MakeRandomDisaster(player->GetPosition(), player->GetDirectionOfMovement(), player->GetElapsedTimeAfterStartLevel());
         float deltaTimeForMovement = clock.restart().asSeconds();
         
         camera->Update(mouseCoords, isMouseMove, disasters);
@@ -151,8 +151,6 @@ int main()
 
         shadowShader.setUniform("mousePosition", player->GetPosition() - camera->GetViewPosition());
         shadowShader.setUniform("isGhostMove", disasters->GetStateGhost());
-
-        //std::cout << camera->GetViewPosition().x << " " << camera->GetViewPosition().y << " main loop" << std::endl;
 
         redrawFrame(camera->m_window, map, camera, shadowShader, light.blocks, corosionShader);
 

@@ -403,7 +403,7 @@ void Map::SpreadWater(sf::Vector2f centralBlock)
 
 void Map::GenerateRandomWater(int countOfMainBlockWater)
 {
-	/*int countOfCenterBlockWater = countOfMainBlockWater;
+	int countOfCenterBlockWater = countOfMainBlockWater;
 
 	int lastXCoord = 1;
 	int lastYCoord = 1;
@@ -420,7 +420,6 @@ void Map::GenerateRandomWater(int countOfMainBlockWater)
 		int randYCoord = Random(lastYCoord, lastUpBoundY);
 
 		SpreadWater(sf::Vector2f(float(randXCoord), float(randYCoord)));
-		std::cout << randXCoord << " " << randYCoord << " water" << std::endl;
 
 		lastXCoord = randXCoord;
 		lastYCoord = randYCoord;
@@ -450,7 +449,6 @@ void Map::GenerateRandomWater(int countOfMainBlockWater)
 		int randYCoord = Random(lastYCoord, lastUpBoundY);
 
 		SpreadWater(sf::Vector2f(float(randXCoord), float(randYCoord)));
-		std::cout << randXCoord << " " << randYCoord << " water" << std::endl;
 
 		lastXCoord = randXCoord;
 		lastYCoord = randYCoord;
@@ -466,9 +464,9 @@ void Map::GenerateRandomWater(int countOfMainBlockWater)
 		{
 			lastUpBoundY = WIDTH_MAP - 1;
 		}
-	}*/
+	}
 
-	SpreadWater(sf::Vector2f(float(10), float(5)));
+	//SpreadWater(sf::Vector2f(float(10), float(5)));
 }
 
 void Map::MakeMap(const sf::View& view, sf::RenderTexture& castTexture)
@@ -1528,11 +1526,11 @@ void Map::MoveWater()
 
 void Map::CreatePortalToNextLevel()
 {
-	//int xCoordForGame = Random(WIDTH_MAP / 2, WIDTH_MAP) * WIDTH_TILE;
-	//int yCoordForGame = Random(HEIGHT_MAP - 40, HEIGHT_MAP - 20) * HEIGHT_TILE;
+	int xCoordForGame = Random(WIDTH_MAP / 2, WIDTH_MAP) * WIDTH_TILE;
+	int yCoordForGame = Random(HEIGHT_MAP - 40, HEIGHT_MAP - 20) * HEIGHT_TILE;
 
-	int xCoordForGame = 15 * 25;
-	int yCoordForGame = 15 * 25;
+	//int xCoordForGame = 15 * 25;
+	//int yCoordForGame = 15 * 25;
 
 	std::cout << xCoordForGame / 25 << " " << yCoordForGame / 25 << " portal" << std::endl;
 

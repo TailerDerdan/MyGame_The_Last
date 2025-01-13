@@ -372,6 +372,8 @@ void Player::PlayerMoveToRightSide(float deltaTimeForMovement, StatePlayerInWate
 		movementOffset = SPEED_PLAYER_FOR_WATER * deltaTime;
 	}
 
+	sf::Vector2f bottomBlock = { std::floor(player.getPosition().x / 25), std::floor(player.getPosition().y / 25) + 2 };
+
 	sf::Vector2f newDirection = { direction.x * movementOffset, direction.y * movementOffset };
 
 	if (std::abs(endPoint.x - positionPlayer.x) <= 1 || !CanPlayerPass(positionPlayer + newDirection, SideForChechiking::Right))
@@ -538,6 +540,7 @@ void Player::PlayerMoveToLeftSideOnIce(float deltaTimeForMovement, StatePlayerIn
 			speedLeft = MIN_SPEED;
 			return;
 		}
+
 
 		player.setPosition(positionPlayer + newDirection);
 
@@ -1003,7 +1006,7 @@ void Player::UpdateRectsOfStates(sf::Vector2f viewPosition, sf::RenderTexture& c
 	{
 		if (fearLevel > MIN_FEAR_LEVEL)
 		{
-			fearLevel -= 0.4f;
+			fearLevel -= 1.0f;
 		}
 		if (fearLevel < MIN_FEAR_LEVEL)
 		{

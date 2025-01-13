@@ -72,14 +72,12 @@ void Flower::MakeRandomGeneration(int countOfFlowerFriendlyBlock, int countOfFlo
 					FlowerSprite flowerSprite;
 					if (randomNumberForTypeFlower > 60)
 					{
-						std::cout << iterX << " " << iterY << " FRIENDLY" << std::endl;
 						flowerType = FlowerType::Friendly;
 						countOfCenterBlockFriendlyFlower--;
 						flowerSprite.sprite.setTexture(m_textureForFlowers);
 					}
 					else
 					{
-						std::cout << iterX << " " << iterY << " ANGRY" << std::endl;
 						flowerType = FlowerType::Angry;
 						countOfCenterBlockAngryFlower--;
 						flowerSprite.sprite.setTexture(m_textureOfFlowerAngry);
