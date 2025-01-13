@@ -14,6 +14,9 @@ const float DAMAGE_FOR_PLAYER = 10.0f;
 const int WIDTH_GHOST = 250;
 const int HEIGHT_GHOST = 250;
 
+const float TIME_BETWEEN_DISASTERS = 20.0f;
+const float TIME_FOR_FIRST_DISASTERS = 40.0f;
+
 enum TypeOfDisaster
 {
 	None,

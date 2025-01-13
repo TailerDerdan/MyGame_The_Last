@@ -39,7 +39,7 @@ int Disaster::Random(int min, int max)
 
 void Disaster::MakeRandomDisaster(sf::Vector2f playerCoord, bool isPlayerMovementToRight, float levelTime)
 {
-	if (timerForDisaster.getElapsedTime().asSeconds() < 5)
+	if (timerForDisaster.getElapsedTime().asSeconds() < TIME_FOR_FIRST_DISASTERS)
 	{
 		if (isFirstDisaster)
 		{
@@ -47,7 +47,7 @@ void Disaster::MakeRandomDisaster(sf::Vector2f playerCoord, bool isPlayerMovemen
 		}
 	}
 
-	if (timerForDisaster.getElapsedTime().asSeconds() < 12)
+	if (timerForDisaster.getElapsedTime().asSeconds() < TIME_BETWEEN_DISASTERS)
 	{
 		if (isNextDisaster || !isFirstDisaster)
 		{

@@ -4,11 +4,11 @@
 #include "EndGame.h"
 #include "Flower.h"
 
-const float SPEED_PLAYER_STONE = 12.f;
+const float SPEED_PLAYER_STONE = 15.f;
 const float SPEED_PLAYER_FOR_JUMP = 25.0f;
-const float SPEED_PLAYER_FOR_FALL = 12.0f;
+const float SPEED_PLAYER_FOR_FALL = 18.0f;
 
-const float SPEED_PLAYER_FOR_WATER = 6.0f;
+const float SPEED_PLAYER_FOR_WATER = 7.0f;
 const float SPEED_PLAYER_FOR_JUMP_FOR_WATER = 5.0f;
 const float SPEED_PLAYER_FOR_WATER_FOR_FALL = 5.0f;
 
