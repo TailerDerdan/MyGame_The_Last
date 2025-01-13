@@ -104,10 +104,6 @@ void Camera::EventHandler(sf::Event& event, sf::Vector2f& mouseCoords, bool& isM
 			isMouseMove = false;
 			break;
 		case sf::Event::KeyPressed:
-			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
-			{
-				//disasters->MakeRandomDisaster(m_player->GetPosition(), m_player->GetDirectionOfMovement(), m_player->GetElapsedTimeAfterStartLevel());
-			}
 			if (sf::Keyboard::isKeyPressed(sf::Keyboard::E))
 			{
 				bool isKeyEPress = true;
@@ -154,7 +150,7 @@ void Camera::Update(sf::Vector2f& mouseCoords, bool& isMouseMove, Disaster* disa
 void Camera::DrawRenderTexture(sf::RenderWindow& window, const sf::Shader& shadowShader, const sf::Shader& corosionShader)
 {
 	window.draw(sf::Sprite(castTexture.getTexture()), &corosionShader);
-	//window.draw(sf::Sprite(renderTextureForLight.getTexture()), &shadowShader);
+	window.draw(sf::Sprite(renderTextureForLight.getTexture()), &shadowShader);
 	window.draw(sf::Sprite(renderTextureForPlayerState.getTexture()));
 }
 
